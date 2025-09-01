@@ -14,6 +14,7 @@ from components.vector_store.faiss_store import FAISSVectorStore
 from components.rag_engine.rag_processor import RAGProcessor
 from components.memory.session_manager import SessionManager
 from components.database.db_query_interface import DatabaseQueryInterface
+from components.hybrid.hybrid_query_agent import HybridQueryAgent
 
 # Load environment variables
 load_dotenv()
@@ -28,13 +29,14 @@ rag_processor = None
 doc_processor = None
 session_manager = None
 db_interface = None
+hybrid_agent = None
 
 # Session state
 current_session_id = None
 
 def initialize_components():
     """Initialize components when first needed"""
-    global vector_store, rag_processor, doc_processor, session_manager, db_interface
+    global vector_store, rag_processor, doc_processor, session_manager, db_interface, hybrid_agent
     
     if session_manager is None:
         print("🔄 Initializing session manager...")
@@ -56,13 +58,21 @@ def initialize_components():
         print("🔄 Initializing database interface...")
         db_interface = DatabaseQueryInterface(session_manager)
     
-    return vector_store, rag_processor, doc_processor, session_manager, db_interface
+    if hybrid_agent is None:
+        print("🔄 Initializing hybrid query agent...")
+        hybrid_agent = HybridQueryAgent(
+            rag_processor=rag_processor,
+            db_analyzer=db_interface.db_analyzer if db_interface else None,
+            session_manager=session_manager
+        )
+    
+    return vector_store, rag_processor, doc_processor, session_manager, db_interface, hybrid_agent
 
 def get_current_session():
     """Get or create current session"""
     global current_session_id
     
-    vs, rag, doc_proc, sess_mgr, db_int = initialize_components()
+    vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
     
     if current_session_id is None:
         current_session_id = sess_mgr.create_session({
@@ -86,7 +96,7 @@ def upload_documents_with_memory(files: List[Any]) -> Tuple[str, str, str]:
         return f"❌ Too many files! Maximum {MAX_FILES} files allowed.", get_document_list(), get_session_info()
     
     try:
-        vs, rag, doc_proc, sess_mgr, db_int = initialize_components()
+        vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
         session_id = get_current_session()
         
         # Get already processed files for this session
@@ -159,7 +169,7 @@ def rag_chat_with_memory(message: str, history: List[Dict]) -> Tuple[str, List[D
             return "", history, get_session_info()
         
         # Initialize components and session
-        vs, rag, doc_proc, sess_mgr, db_int = initialize_components()
+        vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
         session_id = get_current_session()
         
         # Check if any documents are loaded in this session
@@ -211,7 +221,7 @@ def rag_chat_with_memory(message: str, history: List[Dict]) -> Tuple[str, List[D
         
         # Save error to memory (if session manager is available)
         try:
-            vs, rag, doc_proc, sess_mgr, db_int = initialize_components()
+            vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
             session_id = get_current_session()
             sess_mgr.add_message(session_id, 'user', message)
             sess_mgr.add_message(session_id, 'assistant', error_msg, {'error': True})
@@ -223,7 +233,7 @@ def rag_chat_with_memory(message: str, history: List[Dict]) -> Tuple[str, List[D
 def get_document_list() -> str:
     """Get list of documents for current session"""
     try:
-        vs, rag, doc_proc, sess_mgr, db_int = initialize_components()
+        vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
         session_id = get_current_session()
         
         session_docs = sess_mgr.get_session_documents(session_id)
@@ -261,7 +271,7 @@ def get_document_list() -> str:
 def get_session_info() -> str:
     """Get current session information"""
     try:
-        vs, rag, doc_proc, sess_mgr, db_int = initialize_components()
+        vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
         session_id = get_current_session()
         
         stats = sess_mgr.get_session_stats(session_id)
@@ -286,7 +296,7 @@ def new_session() -> Tuple[List[Dict], str, str, str]:
     global current_session_id
     
     try:
-        vs, rag, doc_proc, sess_mgr, db_int = initialize_components()
+        vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
         current_session_id = sess_mgr.create_session({
             'restart_reason': 'user_requested',
             'previous_session': current_session_id
@@ -300,7 +310,7 @@ def new_session() -> Tuple[List[Dict], str, str, str]:
 def clear_all_documents() -> Tuple[str, str, str]:
     """Clear all documents from current session"""
     try:
-        vs, rag, doc_proc, sess_mgr, db_int = initialize_components()
+        vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
         session_id = get_current_session()
         
         # Clear from vector store
@@ -323,7 +333,7 @@ def clear_all_documents() -> Tuple[str, str, str]:
 def database_natural_query(query: str) -> Tuple[str, str]:
     """Handle natural language database queries"""
     try:
-        vs, rag, doc_proc, sess_mgr, db_int = initialize_components()
+        vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
         session_id = get_current_session()
         
         if not query.strip():
@@ -338,7 +348,7 @@ def database_natural_query(query: str) -> Tuple[str, str]:
 def database_direct_sql(sql_query: str) -> Tuple[str, str]:
     """Handle direct SQL query execution"""
     try:
-        vs, rag, doc_proc, sess_mgr, db_int = initialize_components()
+        vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
         session_id = get_current_session()
         
         if not sql_query.strip():
@@ -353,7 +363,7 @@ def database_direct_sql(sql_query: str) -> Tuple[str, str]:
 def get_database_analysis() -> str:
     """Get database structure analysis"""
     try:
-        vs, rag, doc_proc, sess_mgr, db_int = initialize_components()
+        vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
         return db_int.format_database_overview_display()
         
     except Exception as e:
@@ -362,7 +372,7 @@ def get_database_analysis() -> str:
 def get_crud_examples() -> str:
     """Get CRUD operation examples"""
     try:
-        vs, rag, doc_proc, sess_mgr, db_int = initialize_components()
+        vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
         return db_int.get_crud_examples()
         
     except Exception as e:
@@ -371,21 +381,47 @@ def get_crud_examples() -> str:
 def get_database_connection_info() -> str:
     """Get database connection information"""
     try:
-        vs, rag, doc_proc, sess_mgr, db_int = initialize_components()
+        vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
         return db_int.get_connection_info()
         
     except Exception as e:
         return f"❌ Error getting connection info: {str(e)}"
 
 def hybrid_document_database_query(query: str, use_documents: bool, use_database: bool) -> str:
-    """Execute hybrid query across documents and database"""
+    """Execute intelligent hybrid query using the HybridQueryAgent"""
     try:
-        vs, rag, doc_proc, sess_mgr, db_int = initialize_components()
+        vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
         session_id = get_current_session()
         
         if not query.strip():
             return "Please enter a query"
         
+        # Check if user wants to use the smart agent or simple mode
+        if use_documents and use_database:
+            # Use the intelligent agent for true hybrid queries
+            agent_result = hybrid_agt.process_hybrid_query(query, session_id)
+            
+            if agent_result.get('success', False):
+                response = agent_result['response']
+                
+                # Add processing log for transparency
+                if agent_result.get('processing_log'):
+                    response += f"\n\n**🔍 Agent Processing Log:**\n"
+                    for log_entry in agent_result['processing_log'][-3:]:  # Show last 3 steps
+                        response += f"- {log_entry}\n"
+                
+                # Add source breakdown
+                breakdown = agent_result.get('source_breakdown', {})
+                response += f"\n**📊 Sources Used:** "
+                response += f"Documents: {'✅' if breakdown.get('documents_used') else '❌'}, "
+                response += f"Database: {breakdown.get('database_tables_queried', 0)} tables, "
+                response += f"Concepts: {breakdown.get('concepts_extracted', 0)} extracted"
+                
+                return response
+            else:
+                return agent_result.get('response', f"❌ Agent processing failed: {agent_result.get('error', 'Unknown error')}")
+        
+        # Fallback to simple mode for single-source queries
         results = []
         
         # Database component
@@ -416,13 +452,13 @@ def hybrid_document_database_query(query: str, use_documents: bool, use_database
         
         # Log hybrid query
         hybrid_response = "\n\n".join(results)
-        sess_mgr.add_message(session_id, 'user', f"Hybrid Query: {query}", {
-            'query_type': 'hybrid',
+        sess_mgr.add_message(session_id, 'user', f"Simple Hybrid Query: {query}", {
+            'query_type': 'hybrid_simple',
             'used_documents': use_documents,
             'used_database': use_database
         })
         sess_mgr.add_message(session_id, 'assistant', hybrid_response, {
-            'query_type': 'hybrid_response'
+            'query_type': 'hybrid_simple_response'
         })
         
         return hybrid_response
@@ -430,10 +466,47 @@ def hybrid_document_database_query(query: str, use_documents: bool, use_database
     except Exception as e:
         return f"❌ Error processing hybrid query: {str(e)}"
 
+def smart_agent_query(query: str) -> Tuple[str, str]:
+    """Execute smart agent analysis"""
+    try:
+        vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
+        session_id = get_current_session()
+        
+        if not query.strip():
+            return "Please enter a query for the smart agent", ""
+        
+        # Process with intelligent agent
+        agent_result = hybrid_agt.process_hybrid_query(query, session_id)
+        
+        if agent_result.get('success', False):
+            # Format main response
+            response = agent_result['response']
+            
+            # Format processing log
+            log_text = "**🤖 Agent Thinking Process:**\n\n"
+            for log_entry in agent_result.get('processing_log', []):
+                log_text += f"{log_entry}\n"
+            
+            # Add source breakdown to log
+            breakdown = agent_result.get('source_breakdown', {})
+            log_text += f"\n**📊 Analysis Summary:**\n"
+            log_text += f"- Documents Used: {'✅ Yes' if breakdown.get('documents_used') else '❌ No'}\n"
+            log_text += f"- Database Tables: {breakdown.get('database_tables_queried', 0)}\n"
+            log_text += f"- Concepts Extracted: {breakdown.get('concepts_extracted', 0)}\n"
+            
+            return response, log_text
+        else:
+            error_msg = agent_result.get('response', f"❌ Agent failed: {agent_result.get('error', 'Unknown error')}")
+            log_text = "\n".join(agent_result.get('processing_log', ['No processing log available']))
+            return error_msg, log_text
+            
+    except Exception as e:
+        return f"❌ Smart agent error: {str(e)}", f"Error occurred: {str(e)}"
+
 def get_system_status():
     """Get current system status with session info"""
     try:
-        vs, rag, doc_proc, sess_mgr, db_int = initialize_components()
+        vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
         session_id = get_current_session()
         
         # Cleanup expired sessions
@@ -722,13 +795,13 @@ with gr.Blocks(
                 label="Connection Information"
             )
         
-        with gr.Tab("🔄 Hybrid Queries"):
-            gr.Markdown("#### 🔄 Query Both Documents and Database")
-            gr.Markdown("*Combine information from uploaded documents and database tables*")
+        with gr.Tab("🔄 Simple Hybrid"):
+            gr.Markdown("#### 🔄 Basic Document + Database Query")
+            gr.Markdown("*Simple combination of document search and database query*")
             
             hybrid_query_input = gr.Textbox(
-                label="Hybrid Query",
-                placeholder="e.g., 'Compare sales data from database with projections in uploaded documents'",
+                label="Simple Hybrid Query",
+                placeholder="e.g., 'Show document content and related database records'",
                 lines=3
             )
             
@@ -736,13 +809,41 @@ with gr.Blocks(
                 use_docs_check = gr.Checkbox(label="📄 Include Documents", value=True)
                 use_db_check = gr.Checkbox(label="🗄️ Include Database", value=True)
             
-            hybrid_btn = gr.Button("🔄 Execute Hybrid Query", variant="primary", size="lg")
+            hybrid_btn = gr.Button("🔄 Execute Simple Query", variant="primary", size="lg")
             
             hybrid_results = gr.Textbox(
-                label="🔄 Hybrid Query Results",
+                label="🔄 Simple Hybrid Results",
                 lines=12,
                 interactive=False
             )
+        
+        with gr.Tab("🤖 Smart Agent"):
+            gr.Markdown("#### 🤖 Intelligent Hybrid Analysis Agent")
+            gr.Markdown("*Advanced agent that understands documents, analyzes database structure, and provides business insights*")
+            
+            agent_query_input = gr.Textbox(
+                label="Smart Agent Query", 
+                placeholder="e.g., 'Do we have enough high-income customers as mentioned in our strategy document?'",
+                lines=4
+            )
+            
+            agent_btn = gr.Button("🤖 Execute Smart Analysis", variant="primary", size="lg")
+            
+            with gr.Row():
+                with gr.Column(scale=2):
+                    agent_results = gr.Textbox(
+                        label="🤖 Agent Analysis Results",
+                        lines=15,
+                        interactive=False
+                    )
+                
+                with gr.Column(scale=1):
+                    agent_log = gr.Textbox(
+                        label="🔍 Agent Processing Log",
+                        lines=15,
+                        interactive=False,
+                        placeholder="Agent thinking process will appear here..."
+                    )
         
         # Database tab events
         nl_query_btn.click(
@@ -767,6 +868,12 @@ with gr.Blocks(
             fn=hybrid_document_database_query,
             inputs=[hybrid_query_input, use_docs_check, use_db_check],
             outputs=hybrid_results
+        )
+        
+        agent_btn.click(
+            fn=smart_agent_query,
+            inputs=[agent_query_input],
+            outputs=[agent_results, agent_log]
         )
         
         clear_nl_btn.click(lambda: ("", "", ""), outputs=[nl_query_input, nl_results, sql_generated])

@@ -1,5 +1,3 @@
-# Financial Strategy Report - Q3 2024
-## Executive Summary for Hybrid Testing
 
 ### Strategic Business Goals
 Our financial institution is focusing on **customer retention** and **portfolio growth** in the current economic climate. Based on market analysis, we need to prioritize high-value customer relationships while maintaining prudent risk management.
@@ -121,7 +119,3 @@ In periods of **high market volatility**, we should:
 - **Predictive lending models** to reduce default rates
 
 ---
-
-*This strategic document should be cross-referenced with current database metrics to validate our assumptions and track progress toward these business objectives.*
-
-**Document created for testing hybrid queries that combine strategic goals with actual database performance metrics.**
