@@ -147,8 +147,8 @@ SQL Query:"""
         
         try:
             with self.engine.connect() as conn:
-                # Add LIMIT if not present
-                if 'LIMIT' not in query_upper:
+                # Add LIMIT if not present and it's not a COUNT/aggregate query
+                if 'LIMIT' not in query_upper and not any(agg in query_upper for agg in ['COUNT(', 'SUM(', 'AVG(', 'MAX(', 'MIN(']):
                     sql_query += f" LIMIT {max_rows}"
                 
                 result = conn.execute(text(sql_query))

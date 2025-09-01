@@ -409,8 +409,9 @@ class DatabaseAnalyzer:
         
         try:
             with self.engine.connect() as conn:
-                # Add LIMIT if not present and it's a SELECT
-                if query_upper.startswith('SELECT') and 'LIMIT' not in query_upper:
+                # Add LIMIT if not present, it's a SELECT, and not an aggregate query
+                if (query_upper.startswith('SELECT') and 'LIMIT' not in query_upper and 
+                    not any(agg in query_upper for agg in ['COUNT(', 'SUM(', 'AVG(', 'MAX(', 'MIN('])):
                     sql_query += f" LIMIT {max_rows}"
                 
                 result = conn.execute(text(sql_query))
@@ -457,51 +458,6 @@ class DatabaseAnalyzer:
                 "query_attempted": sql_query
             }
     
-    def _get_foreign_key_relationships(self) -> List[Dict[str, Any]]:
-        """Get foreign key relationships"""
-        fk_query = """
-        SELECT
-            tc.table_name as source_table,
-            kcu.column_name as source_column,
-            ccu.table_name AS target_table,
-            ccu.column_name AS target_column,
-            tc.constraint_name,
-            rc.update_rule,
-            rc.delete_rule
-        FROM information_schema.table_constraints AS tc 
-        JOIN information_schema.key_column_usage AS kcu
-            ON tc.constraint_name = kcu.constraint_name
-            AND tc.table_schema = kcu.table_schema
-        JOIN information_schema.constraint_column_usage AS ccu
-            ON ccu.constraint_name = tc.constraint_name
-            AND ccu.table_schema = tc.table_schema
-        LEFT JOIN information_schema.referential_constraints AS rc
-            ON tc.constraint_name = rc.constraint_name
-        WHERE tc.constraint_type = 'FOREIGN KEY'
-            AND tc.table_schema = 'public';
-        """
-        
-        try:
-            with self.engine.connect() as conn:
-                result = conn.execute(text(fk_query))
-                rows = result.fetchall()
-            
-            relationships = []
-            for row in rows:
-                relationships.append({
-                    "source_table": row[0],
-                    "source_column": row[1],
-                    "target_table": row[2],
-                    "target_column": row[3],
-                    "constraint_name": row[4],
-                    "update_rule": row[5],
-                    "delete_rule": row[6]
-                })
-            
-            return relationships
-        except Exception as e:
-            print(f"Error getting foreign keys: {e}")
-            return []
     
     def _get_indexes_info(self) -> Dict[str, List[Dict[str, Any]]]:
         """Get index information"""
