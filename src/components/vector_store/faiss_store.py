@@ -8,7 +8,9 @@ from langchain.schema import Document
 
 
 class FAISSVectorStore:
-    def __init__(self, persist_directory: str = "./faiss_db"):
+    def __init__(self, persist_directory: str = None):
+        if persist_directory is None:
+            persist_directory = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "storage", "faiss_db")
         self.persist_directory = persist_directory
         self.vector_store = None
         self.embeddings = None
@@ -22,34 +24,46 @@ class FAISSVectorStore:
     def _initialize_embeddings(self):
         """Initialize embedding model"""
         try:
-            # Use local embeddings with device specification
+            # Use local embeddings with proper tensor handling
             print("🔄 Using local embeddings (HuggingFace)...")
             from sentence_transformers import SentenceTransformer
             import torch
             
-            # Force CPU device to avoid meta tensor issues
-            device = 'cpu'
-            torch.set_default_device('cpu')
+            # Clear any existing default device settings
+            if hasattr(torch, '_C') and hasattr(torch._C, '_clear_default_device'):
+                try:
+                    torch._C._clear_default_device()
+                except:
+                    pass
             
-            # Initialize with explicit device
-            self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2', device=device)
+            # Initialize model with proper device handling
+            model_name = 'all-MiniLM-L6-v2'
+            
+            # Load model without setting default device
+            self.embedding_model = SentenceTransformer(model_name)
+            
+            # Move to CPU if not already there
+            if hasattr(self.embedding_model, 'device'):
+                if str(self.embedding_model.device) != 'cpu':
+                    self.embedding_model = self.embedding_model.to('cpu')
+            
             self.embeddings = self._create_embedding_function()
+            print("✅ Embeddings initialized successfully")
             
         except Exception as e:
             print(f"Error initializing embeddings: {e}")
-            # Try alternative approach
+            # Try HuggingFace embeddings as fallback
             try:
-                print("🔄 Trying alternative embedding initialization...")
-                from sentence_transformers import SentenceTransformer
-                
-                # Download model first, then load
-                model_name = 'all-MiniLM-L6-v2'
-                self.embedding_model = SentenceTransformer(model_name, device='cpu')
-                self.embedding_model.to('cpu')
-                self.embeddings = self._create_embedding_function()
+                print("🔄 Trying HuggingFace embeddings fallback...")
+                self.embeddings = HuggingFaceEmbeddings(
+                    model_name='all-MiniLM-L6-v2',
+                    model_kwargs={'device': 'cpu'},
+                    encode_kwargs={'device': 'cpu', 'batch_size': 1}
+                )
+                print("✅ HuggingFace embeddings initialized successfully")
                 
             except Exception as e2:
-                print(f"Alternative initialization also failed: {e2}")
+                print(f"Fallback initialization also failed: {e2}")
                 raise e2
     
     def _create_embedding_function(self):

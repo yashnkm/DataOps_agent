@@ -8,14 +8,30 @@ import google.generativeai as genai
 
 class DatabaseQueryInterface:
     def __init__(self, session_manager=None):
-        self.db_analyzer = DatabaseAnalyzer()
-        self.db_manager = DatabaseManager()
         self.session_manager = session_manager
         self.query_history = []
+        
+        # Initialize database components with error handling
+        try:
+            self.db_analyzer = DatabaseAnalyzer()
+            self.db_manager = DatabaseManager()
+            print("✅ Database interface initialized successfully")
+        except Exception as e:
+            print(f"⚠️ Database interface initialization warning: {e}")
+            self.db_analyzer = None
+            self.db_manager = None
         
     def get_database_overview(self) -> Dict[str, Any]:
         """Get comprehensive database overview"""
         try:
+            # Check if database components are available
+            if not self.db_analyzer or not self.db_manager:
+                return {
+                    "success": False,
+                    "message": "🔌 Database not configured. Set DB_HOST, DB_NAME, DB_USER, DB_PASSWORD in .env",
+                    "details": {}
+                }
+            
             # Analyze database structure
             analysis = self.db_analyzer.analyze_database_structure()
             
@@ -100,6 +116,10 @@ class DatabaseQueryInterface:
     def execute_natural_language_query(self, user_query: str, session_id: str = None) -> Tuple[str, str]:
         """Execute natural language database query with session tracking"""
         try:
+            # Check if database is available
+            if not self.db_analyzer or not self.db_manager:
+                return "🔌 Database not configured. Please set up PostgreSQL connection in .env file.", ""
+            
             # Convert to SQL
             sql_result = self.db_analyzer.natural_language_to_sql(user_query)
             
@@ -156,6 +176,10 @@ class DatabaseQueryInterface:
     def execute_direct_sql(self, sql_query: str, session_id: str = None) -> Tuple[str, str]:
         """Execute SQL query directly with session tracking"""
         try:
+            # Check if database is available
+            if not self.db_analyzer or not self.db_manager:
+                return "🔌 Database not configured. Please set up PostgreSQL connection in .env file.", ""
+            
             query_result = self.db_analyzer.execute_safe_query(sql_query)
             
             if not query_result["success"]:
@@ -192,6 +216,10 @@ class DatabaseQueryInterface:
     def get_crud_examples(self) -> str:
         """Get CRUD operation examples"""
         try:
+            # Check if database is available
+            if not self.db_analyzer or not self.db_manager:
+                return "🔌 Database not configured. Please set up PostgreSQL connection in .env file."
+            
             examples = self.db_analyzer.generate_crud_examples()
             
             if "error" in examples:
@@ -248,6 +276,24 @@ class DatabaseQueryInterface:
     def get_connection_info(self) -> str:
         """Get database connection information for display"""
         try:
+            # Check if database is available
+            if not self.db_analyzer or not self.db_manager:
+                return """# 🔌 Database Connection Status
+                
+❌ **Status:** Not Configured
+
+## Required Environment Variables
+Please add these to your `.env` file:
+```
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=your_database_name
+DB_USER=your_username
+DB_PASSWORD=your_password
+```
+
+💡 **Note:** Database features are optional. You can use document RAG without database connection."""
+            
             conn_status = self.db_analyzer.get_connection_status()
             
             info = f"""# 🔌 Database Connection Status

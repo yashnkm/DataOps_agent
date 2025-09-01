@@ -8,8 +8,8 @@ from pathlib import Path
 
 
 class SessionManager:
-    def __init__(self, db_path: str = "./sessions.db"):
-        self.db_path = db_path
+    def __init__(self, db_path: str = None):
+        self.db_path = db_path or os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "storage", "sessions.db")
         self.current_session_id = None
         self.max_context_length = 10  # Maximum messages to keep in context
         self.session_timeout_hours = 24  # Sessions expire after 24 hours

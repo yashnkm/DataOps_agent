@@ -17,12 +17,9 @@ class DatabaseManager:
         if os.getenv('GOOGLE_API_KEY_SOL_4'):
             genai.configure(api_key=os.getenv('GOOGLE_API_KEY_SOL_4'))
         
-        # Try to connect but don't block if it fails
-        try:
-            self.connect_to_database()
-        except Exception as e:
-            print(f"Database connection failed during init: {e}")
-            self.connection_status = "failed"
+        # Try to connect but don't block if it fails - skip for now
+        self.connection_status = "not_attempted"
+        print("💡 Database connection will be attempted on first use")
     
     def _build_connection_string(self) -> str:
         """Build PostgreSQL connection string from environment variables"""
