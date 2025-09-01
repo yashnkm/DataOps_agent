@@ -1,0 +1,81 @@
+Core Framework
+txt# API Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+python-multipart==0.0.6
+
+# Environment & Config
+python-dotenv==1.0.0
+AI/LLM Libraries
+txt# Google AI
+google-generativeai==0.3.2
+google-api-core==2.15.0
+
+# LangChain Ecosystem
+langchain==0.1.5
+langchain-google-genai==0.0.9
+langchain-community==0.0.16
+langchain-core==0.1.15
+
+# Embeddings & Reranking
+sentence-transformers==2.3.1
+torch==2.1.2
+transformers==4.36.2
+Vector Store & Search
+txt# ChromaDB
+chromadb==0.4.22
+hnswlib==0.8.0
+
+# Search Enhancement
+rank-bm25==0.2.2  # For hybrid search
+scikit-learn==1.4.0  # For similarity metrics
+Database
+txt# PostgreSQL
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.25
+alembic==1.13.1  # Database migrations
+
+# Connection Pooling
+psycopg-pool==3.2.0
+Document Processing
+txt# PDF Processing
+pypdf==3.17.4
+pdfplumber==0.10.3  # Better table extraction
+
+# Office Documents
+python-docx==1.1.0
+openpyxl==3.1.2  # Excel files
+python-pptx==0.6.23  # PowerPoint files
+
+# CSV & Data
+pandas==2.1.4
+numpy==1.26.3
+
+# Text Extraction
+unstructured[all-docs]==0.11.8  # Universal document parser
+pytesseract==0.3.10  # OCR for scanned documents
+Utilities
+txt# Async Support
+aiofiles==23.2.1
+aiohttp==3.9.1
+asyncio==3.4.3
+
+# Data Validation
+jsonschema==4.20.0
+email-validator==2.1.0
+
+# Logging & Monitoring
+loguru==0.7.2
+python-json-logger==2.0.7
+
+# Security
+cryptography==41.0.7
+bcrypt==4.1.2
+python-jose[cryptography]==3.3.0  # JWT tokens
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+httpx==0.26.0  # API testing

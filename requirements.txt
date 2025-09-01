@@ -1,0 +1,41 @@
+# Gradio Framework
+gradio
+
+# AI/LLM Libraries
+google-generativeai
+google-api-core
+
+# LangChain Ecosystem
+langchain
+langchain-google-genai
+langchain-community
+langchain-core
+
+# Embeddings & Reranking
+sentence-transformers
+torch
+transformers
+
+# Vector Store & Search
+faiss-cpu
+langchain-community
+rank-bm25
+scikit-learn
+
+# Document Processing
+pypdf
+pdfplumber
+python-docx
+openpyxl
+python-pptx
+pandas
+numpy
+unstructured[all-docs]
+pytesseract
+
+# Database
+psycopg2-binary
+sqlalchemy
+
+# Utilities
+python-dotenv

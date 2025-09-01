@@ -1,0 +1,34 @@
+RAG System Development Log
+========================
+
+2025-08-31: Created CLAUDE.md with project overview and function breakdown
+2025-08-31: Updated CLAUDE.md to specify user handles app startup and dependency installation
+2025-08-31: Created logs directory and logs.txt file for tracking development activities
+2025-08-31: Created document_processor.py with DocumentProcessor class for file upload and text extraction
+2025-08-31: Created vector_store.py with VectorStore class for embeddings and ChromaDB operations
+2025-08-31: Created rag_engine.py with RAG pipeline, hybrid search, and reranking functionality
+2025-08-31: Created database_manager.py with PostgreSQL connection and natural language to SQL conversion
+2025-08-31: Created requirements.txt with all project dependencies
+2025-08-31: Created .env.template with required environment variables
+2025-08-31: Created README.md with installation and setup instructions
+2025-08-31: Created app.py with complete Gradio interface featuring chat, file upload, and system status
+2025-08-31: Updated API key name from GOOGLE_API_KEY to GOOGLE_API_KEY_SOL_4 across all files
+2025-08-31: Fixed requirements.txt - removed version conflicts and hnswlib (Windows compilation issue)
+2025-08-31: Fixed Gradio file upload handling to work with file paths instead of file objects
+2025-08-31: Created test_app.py and app_simple.py for debugging server crashes
+2025-08-31: Fixed main app.py with lazy component initialization to prevent startup crashes
+2025-08-31: Temporarily disabled database manager to fix app hanging - document RAG mode only for now
+2025-08-31: Replaced ChromaDB with FAISS vector store using LangChain for better stability
+2025-08-31: Created organized folder structure: components/document_processing, vector_store, rag_engine, database
+2025-08-31: Built new FAISS-based RAG system with hybrid search and reranking in main_app.py
+2025-08-31: Removed old ChromaDB files and updated requirements.txt for FAISS
+2025-08-31: Created main_app_improved.py with separate Documents tab, duplicate file prevention, and upload limits
+2025-08-31: Fixed UI theme to use gr.themes.Orange() and added orange gradient styling with Enter-to-send
+2025-08-31: Disabled reranking model to prevent app hanging during initialization
+2025-08-31: Created session management system with SQLite for conversation memory and document tracking
+2025-08-31: Built main_app_with_memory.py featuring session persistence, conversation context, and memory-enhanced responses
+2025-08-31: Fixed torch meta tensor issues and FAISS embedding compatibility by extending Embeddings base class
+2025-09-01: Created db_analyzer.py with comprehensive PostgreSQL schema analysis and relationship detection
+2025-09-01: Built db_query_interface.py with natural language to SQL conversion and CRUD operation examples  
+2025-09-01: Integrated database tab into main_app_with_memory.py with query interface, analysis, examples, and hybrid queries
+2025-09-01: Added psycopg2-binary and sqlalchemy to requirements.txt for PostgreSQL support

@@ -1,0 +1,21 @@
+RAG-Powered Database Query System
+Executive Summary
+We're building an intelligent document and database query system that bridges the gap between unstructured documents and structured database operations. The system enables users to interact with both their document repository and PostgreSQL database using natural language, eliminating the need for SQL knowledge or manual data entry.
+Core Capabilities
+The system operates in four distinct modes, automatically determined by analyzing user intent:
+Document Intelligence Mode: Users upload various document formats (PDFs, Word documents, spreadsheets, text files) and ask questions about their content. The system uses semantic search to find relevant information and provides accurate answers with source citations. For example: "What are the key findings in the Q3 report?"
+Database Query Mode: Direct natural language queries to the PostgreSQL database without writing SQL. The system understands the database schema and generates appropriate queries. For example: "Show me all customers who joined this month."
+Hybrid Intelligence Mode: The most powerful feature - combining document context with database queries. The system can reference information from documents to query the database or vice versa. For example: "Compare the sales targets mentioned in the planning document with actual sales in the database."
+Intelligent Data Extraction & Insertion Mode: Automatically extracts structured data from documents and inserts it into the database with proper validation. The system understands document context, maps it to database schema, validates data integrity, and handles bulk insertions. For example: "Extract all product specifications from the uploaded PDF and add them to the products table."
+Technical Architecture
+The system uses Google's Gemini 2.5 Flash for natural language understanding and SQL generation, Google's Embedding API for document vectorization, ChromaDB for efficient vector storage and retrieval, and PostgreSQL for structured data storage. A CrossEncoder reranking model ensures the most relevant document chunks are used for context.
+Key Benefits
+
+No SQL Required: Business users can query databases using plain English
+Unified Knowledge Base: Combines document knowledge with database data
+Automated Data Entry: Eliminates manual data transfer from documents to database
+Intelligent Validation: Ensures data quality before database insertion
+Context-Aware: Understands relationships between documents and database entities
+
+Use Cases
+Perfect for businesses that need to query financial reports and update accounting databases, extract product information from vendor catalogs, analyze meeting notes against customer data, or process forms and automatically populate databases. The system transforms how organizations interact with their data, making both unstructured documents and structured databases accessible through simple natural language queries.
