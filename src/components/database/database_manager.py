@@ -117,7 +117,7 @@ Natural language query: {natural_language_query}
 
 SQL Query:"""
 
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             response = model.generate_content(prompt)
             
             # Clean up the response (remove any markdown formatting)

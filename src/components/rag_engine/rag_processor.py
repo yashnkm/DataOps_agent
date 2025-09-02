@@ -155,7 +155,7 @@ class RAGProcessor:
         # Generate response
         try:
             if os.getenv('GOOGLE_API_KEY_SOL_4'):
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                model = genai.GenerativeModel('gemini-2.5-flash')
                 
                 prompt = f"""Answer the user's question based on the provided document context.
 Use only the information from the context. If the answer isn't in the context, say so clearly.

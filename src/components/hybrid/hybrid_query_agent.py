@@ -3,6 +3,11 @@ import json
 from typing import Dict, Any, List, Optional, Tuple
 import google.generativeai as genai
 from datetime import datetime
+import sys
+
+# Import the database tools
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+from components.database.database_tools import DatabaseTools
 
 
 class HybridQueryAgent:
@@ -15,6 +20,9 @@ class HybridQueryAgent:
         self.rag_processor = rag_processor
         self.db_analyzer = db_analyzer  
         self.session_manager = session_manager
+        
+        # Initialize MCP-style database tools
+        self.db_tools = DatabaseTools(db_analyzer)
         
         # Configure Gemini for intelligent analysis
         if os.getenv('GOOGLE_API_KEY_SOL_4'):
@@ -34,6 +42,11 @@ class HybridQueryAgent:
             intent_analysis = self._analyze_user_intent(user_query)
             if intent_analysis.get('error'):
                 return self._create_error_response(intent_analysis['error'])
+            
+            # Phase 1.5: Extract document concepts if needed
+            if intent_analysis.get('needs_documents', False) and self.rag_processor:
+                doc_concepts = self._extract_initial_document_concepts(user_query, intent_analysis)
+                intent_analysis['document_concepts'] = doc_concepts
             
             # Phase 2: Database Scouting
             db_scouting = self._scout_database_relevance(intent_analysis, user_query)
@@ -80,7 +93,7 @@ Return ONLY valid JSON, no other text."""
             if not os.getenv('GOOGLE_API_KEY_SOL_4'):
                 return {"error": "Google API key not configured"}
             
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             response = model.generate_content(prompt)
             
             # Parse JSON response
@@ -104,112 +117,62 @@ Return ONLY valid JSON, no other text."""
             return {"error": f"Intent analysis failed: {str(e)}"}
     
     def _scout_database_relevance(self, intent_analysis: Dict, user_query: str) -> Dict[str, Any]:
-        """Phase 2: Scout database structure for relevant tables/columns"""
-        self._log_phase("🔍 Phase 2: Scouting database structure")
+        """Phase 2: Scout database structure using database tools"""
+        self._log_phase("🔍 Phase 2: Using database discovery tool")
         
         if not intent_analysis.get('needs_database', False):
             self._log_phase("⏭️ Skipping database scouting - not needed for this query")
             return {"relevant_tables": [], "skip_database": True}
         
-        if not self.db_analyzer or self.db_analyzer.connection_status != "connected":
-            return {"error": "Database not available for scouting"}
+        # Use Tool 1: Database Discovery
+        discovery_result = self.db_tools.analyze_database_structure()
         
-        try:
-            # Get actual database structure
-            db_overview = self.db_analyzer.analyze_database_structure()
-            if "error" in db_overview:
-                return {"error": f"Database structure analysis failed: {db_overview['error']}"}
+        if not discovery_result.get("success", False):
+            return {"error": f"Database discovery failed: {discovery_result.get('error', 'Unknown error')}"}
+        
+        available_tables = discovery_result.get("table_names", [])
+        tables_info = discovery_result.get("tables", {})
+        
+        self._log_phase(f"🔍 Discovered {len(available_tables)} tables: {', '.join(available_tables)}")
+        
+        # Analyze each table for relevance using Tool 2
+        relevant_tables = []
+        document_concepts = intent_analysis.get('document_concepts', [])
+        
+        for table_name in available_tables:
+            self._log_phase(f"🔬 Analyzing {table_name} table...")
             
-            actual_tables = db_overview["tables"]
-            target_concepts = intent_analysis.get('database_targets', [])
-            key_concepts = intent_analysis.get('key_concepts', [])
+            # Use Tool 2: Table Content Analysis
+            table_analysis = self.db_tools.analyze_table_content(table_name, document_concepts)
             
-            # Score table relevance
-            relevant_tables = []
-            
-            for table_name, table_info in actual_tables.items():
-                if table_name.startswith('pg_'):
-                    continue
+            if table_analysis.get("success", False):
+                relevance_score = table_analysis.get("relevance_score", 0.0)
                 
-                relevance_score = self._calculate_table_relevance(
-                    table_name, table_info, target_concepts, key_concepts, user_query
-                )
-                
-                if relevance_score > 0:
+                if relevance_score > 0:  # Only include relevant tables
                     relevant_tables.append({
                         "table_name": table_name,
                         "relevance_score": relevance_score,
-                        "columns": table_info["columns"],
-                        "row_count": table_info["row_count"],
-                        "reasoning": self._explain_table_relevance(table_name, target_concepts, key_concepts)
+                        "business_context": table_analysis.get("business_context", ""),
+                        "table_info": table_analysis.get("table_info", {}),
+                        "query_potential": table_analysis.get("query_potential", {})
                     })
-            
-            # Sort by relevance
-            relevant_tables.sort(key=lambda x: x["relevance_score"], reverse=True)
-            
-            self._log_phase(f"✅ Found {len(relevant_tables)} relevant tables")
-            return {"relevant_tables": relevant_tables[:3]}  # Top 3 most relevant
-            
-        except Exception as e:
-            return {"error": f"Database scouting failed: {str(e)}"}
-    
-    def _calculate_table_relevance(self, table_name: str, table_info: Dict, 
-                                 target_concepts: List[str], key_concepts: List[str], 
-                                 user_query: str) -> float:
-        """Calculate how relevant a table is to the user query"""
-        score = 0.0
-        query_lower = user_query.lower()
+                    
+                    self._log_phase(f"✅ {table_name}: relevance {relevance_score:.1f}")
+                else:
+                    self._log_phase(f"⏭️ {table_name}: not relevant (score {relevance_score:.1f})")
+            else:
+                self._log_phase(f"❌ {table_name}: analysis failed")
         
-        # Direct table name mentions
-        if table_name.lower() in query_lower:
-            score += 10.0
+        # Sort by relevance score
+        relevant_tables.sort(key=lambda x: x["relevance_score"], reverse=True)
         
-        # Target concept matching
-        for concept in target_concepts:
-            if concept.lower() in table_name.lower():
-                score += 5.0
+        self._log_phase(f"🎯 Selected {len(relevant_tables)} relevant tables for querying")
         
-        # Column relevance
-        columns = table_info.get("columns", [])
-        for col in columns:
-            col_name = col["name"].lower()
-            
-            # Key concept matching in columns
-            for concept in key_concepts:
-                if concept.lower() in col_name:
-                    score += 3.0
-            
-            # Specific important columns
-            if any(keyword in col_name for keyword in ['income', 'balance', 'amount', 'score', 'value']):
-                if any(keyword in query_lower for keyword in ['income', 'money', 'balance', 'score', 'value', 'wealth']):
-                    score += 2.0
-            
-            # Date columns for time-based queries
-            if 'date' in col_name and any(keyword in query_lower for keyword in ['recent', 'last', 'this', 'month', 'year']):
-                score += 1.0
-        
-        # Row count consideration (prefer tables with data)
-        if table_info.get("row_count", 0) > 0:
-            score += 1.0
-        
-        return score
-    
-    def _explain_table_relevance(self, table_name: str, target_concepts: List[str], key_concepts: List[str]) -> str:
-        """Explain why a table is relevant"""
-        reasons = []
-        
-        if table_name in ['customers', 'accounts', 'portfolios']:
-            reasons.append(f"{table_name} contains financial customer data")
-        
-        for concept in target_concepts:
-            if concept.lower() in table_name.lower():
-                reasons.append(f"matches {concept} concept")
-        
-        return "; ".join(reasons) if reasons else "general business relevance"
+        return {"relevant_tables": relevant_tables[:3]}  # Top 3 most relevant
     
     def _execute_smart_queries(self, intent_analysis: Dict, db_scouting: Dict, user_query: str) -> Dict[str, Any]:
-        """Phase 3: Execute targeted queries on relevant tables"""
-        self._log_phase("💻 Phase 3: Executing smart queries")
+        """Phase 3: Execute targeted queries using database tools"""
+        self._log_phase("💻 Phase 3: Executing smart queries with tools")
         
         results = {
             "document_results": None,
@@ -219,7 +182,7 @@ Return ONLY valid JSON, no other text."""
         
         # Document search first (if needed)
         if intent_analysis.get('needs_documents', False) and self.rag_processor:
-            self._log_phase("📄 Searching documents...")
+            self._log_phase("📄 Using document search...")
             try:
                 doc_keywords = intent_analysis.get('document_keywords', [user_query])
                 search_query = " ".join(doc_keywords)
@@ -227,236 +190,161 @@ Return ONLY valid JSON, no other text."""
                 rag_result = self.rag_processor.process_query(search_query, use_reranking=False, final_results=3)
                 results["document_results"] = rag_result
                 
-                # Extract key values/concepts from document results
-                results["document_concepts"] = self._extract_document_concepts(rag_result.get('response', ''))
-                self._log_phase(f"✅ Found document concepts: {results['document_concepts']}")
+                # Use Tool 5: Extract document concepts
+                concept_extraction = self.db_tools.extract_document_concepts(
+                    rag_result.get('response', ''), user_query
+                )
+                
+                if concept_extraction.get("success", False):
+                    results["document_concepts"] = concept_extraction.get("concepts", [])
+                    self._log_phase(f"✅ Extracted {len(results['document_concepts'])} document concepts")
+                else:
+                    self._log_phase("❌ Document concept extraction failed")
                 
             except Exception as e:
                 self._log_phase(f"❌ Document search failed: {str(e)}")
         
-        # Database queries (if needed and relevant tables found)
+        # Database queries using tools (if needed and relevant tables found)
         if (intent_analysis.get('needs_database', False) and 
             not db_scouting.get('skip_database', False) and
             db_scouting.get('relevant_tables')):
             
-            self._log_phase("🗄️ Querying relevant database tables...")
+            self._log_phase("🗄️ Using smart query tools on relevant tables...")
             
             for table_info in db_scouting['relevant_tables']:
                 table_name = table_info['table_name']
+                query_intent = intent_analysis.get('comparison_type', 'data_analysis')
                 
-                # Generate context-aware query for this specific table
-                table_query = self._generate_table_specific_query(
-                    table_name, table_info, intent_analysis, results["document_concepts"], user_query
+                self._log_phase(f"🎯 Using Tool 3 on {table_name}...")
+                
+                # Use Tool 3: Smart Query Executor
+                query_result = self.db_tools.execute_targeted_query(
+                    table_name=table_name,
+                    query_intent=query_intent,
+                    document_concepts=results["document_concepts"],
+                    user_query=user_query
                 )
                 
-                if table_query:
-                    self._log_phase(f"🎯 Querying {table_name}: {table_query[:50]}...")
-                    
-                    query_result = self.db_analyzer.execute_safe_query(table_query)
-                    if query_result.get('success', False):
-                        results["database_results"].append({
-                            "table": table_name,
-                            "query": table_query,
-                            "data": query_result.get('data', []),
-                            "row_count": query_result.get('row_count', 0),
-                            "relevance_reasoning": table_info['reasoning']
-                        })
-                        self._log_phase(f"✅ {table_name}: {query_result.get('row_count', 0)} results")
-                    else:
-                        self._log_phase(f"❌ {table_name} query failed: {query_result.get('error', 'unknown')}")
+                if query_result.get('success', False):
+                    results["database_results"].append({
+                        "table": table_name,
+                        "query": query_result.get('query_used', ''),
+                        "data": query_result.get('data', []),
+                        "row_count": query_result.get('row_count', 0),
+                        "business_interpretation": query_result.get('business_interpretation', ''),
+                        "relevance_score": query_result.get('relevance_score', 0.0)
+                    })
+                    self._log_phase(f"✅ {table_name}: {query_result.get('row_count', 0)} results (relevance: {query_result.get('relevance_score', 0):.1f})")
+                else:
+                    self._log_phase(f"❌ {table_name} query failed: {query_result.get('error', 'unknown')}")
         
         return results
     
-    def _extract_document_concepts(self, document_response: str) -> List[Dict[str, str]]:
-        """Extract key numerical values and concepts from document text"""
-        concepts = []
-        
-        # Simple pattern matching for now (could be enhanced with NLP)
-        text = document_response.lower()
-        
-        # Extract income thresholds
-        import re
-        income_patterns = re.findall(r'\$?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*(?:income|salary|annual)', text)
-        for amount in income_patterns:
-            concepts.append({
-                "type": "income_threshold", 
-                "value": amount.replace(',', ''),
-                "context": "income requirement"
-            })
-        
-        # Extract percentages
-        percentage_patterns = re.findall(r'(\d+(?:\.\d+)?)\s*%', text)
-        for pct in percentage_patterns:
-            concepts.append({
-                "type": "percentage",
-                "value": pct,
-                "context": "performance or allocation target"
-            })
-        
-        # Extract credit score mentions
-        credit_patterns = re.findall(r'credit\s+score[s]?\s+(?:above|over|higher\s+than)\s+(\d+)', text)
-        for score in credit_patterns:
-            concepts.append({
-                "type": "credit_score_threshold",
-                "value": score,
-                "context": "credit requirement"
-            })
-        
-        return concepts
-    
-    def _generate_table_specific_query(self, table_name: str, table_info: Dict, 
-                                     intent_analysis: Dict, document_concepts: List[Dict], 
-                                     user_query: str) -> Optional[str]:
-        """Generate intelligent, targeted query for specific table"""
-        
-        columns = table_info['columns']
-        column_names = [col['name'] for col in columns]
-        
-        # Build query based on document concepts and table structure
-        query_parts = []
-        where_conditions = []
-        
-        # Base SELECT
-        if table_name == 'customers':
-            # For customers, show relevant personal and financial info
-            relevant_cols = []
-            for col in ['customer_id', 'first_name', 'last_name', 'annual_income', 'credit_score', 'customer_segment']:
-                if col in column_names:
-                    relevant_cols.append(col)
-            
-            if relevant_cols:
-                query_parts.append(f"SELECT {', '.join(relevant_cols)}")
-                query_parts.append(f"FROM {table_name}")
-                
-                # Apply document-based filters
-                for concept in document_concepts:
-                    if concept['type'] == 'income_threshold' and 'annual_income' in column_names:
-                        threshold = concept['value']
-                        where_conditions.append(f"annual_income >= {threshold}")
-                    elif concept['type'] == 'credit_score_threshold' and 'credit_score' in column_names:
-                        threshold = concept['value']
-                        where_conditions.append(f"credit_score >= {threshold}")
-                
-                # Default active customers filter
-                if 'is_active' in column_names:
-                    where_conditions.append("is_active = true")
-        
-        elif table_name == 'accounts':
-            # For accounts, show balance and account info
-            relevant_cols = []
-            for col in ['account_id', 'customer_id', 'account_type', 'balance', 'account_status']:
-                if col in column_names:
-                    relevant_cols.append(col)
-            
-            if relevant_cols:
-                query_parts.append(f"SELECT {', '.join(relevant_cols)}")
-                query_parts.append(f"FROM {table_name}")
-                
-                # Apply filters based on query content
-                if 'high' in user_query.lower() and 'balance' in column_names:
-                    where_conditions.append("balance > 100000")  # High balance threshold
-                
-                if 'account_status' in column_names:
-                    where_conditions.append("account_status = 'active'")
-        
-        elif table_name == 'portfolios':
-            # For portfolios, show performance and value info
-            relevant_cols = []
-            for col in ['portfolio_id', 'customer_id', 'portfolio_name', 'total_value', 'ytd_return_percentage', 'risk_tolerance']:
-                if col in column_names:
-                    relevant_cols.append(col)
-            
-            if relevant_cols:
-                query_parts.append(f"SELECT {', '.join(relevant_cols)}")
-                query_parts.append(f"FROM {table_name}")
-                
-                # Apply performance filters based on document concepts
-                for concept in document_concepts:
-                    if concept['type'] == 'percentage' and 'ytd_return_percentage' in column_names:
-                        # Use percentage from document as comparison
-                        pct = float(concept['value'])
-                        if 'performance' in user_query.lower() or 'return' in user_query.lower():
-                            where_conditions.append(f"ytd_return_percentage >= {pct}")
-        
-        elif table_name == 'loans':
-            # For loans, show loan details and status
-            relevant_cols = []
-            for col in ['loan_id', 'customer_id', 'loan_type', 'loan_amount', 'outstanding_balance', 'loan_status']:
-                if col in column_names:
-                    relevant_cols.append(col)
-            
-            if relevant_cols:
-                query_parts.append(f"SELECT {', '.join(relevant_cols)}")
-                query_parts.append(f"FROM {table_name}")
-                
-                if 'loan_status' in column_names:
-                    where_conditions.append("loan_status = 'active'")
-        
-        else:
-            # Generic approach for other tables
-            query_parts.append(f"SELECT *")
-            query_parts.append(f"FROM {table_name}")
-        
-        # Add WHERE conditions
-        if where_conditions:
-            query_parts.append("WHERE " + " AND ".join(where_conditions))
-        
-        # Add LIMIT
-        query_parts.append("LIMIT 10")
-        
-        final_query = " ".join(query_parts)
-        self._log_phase(f"🎯 Generated query for {table_name}")
-        
-        return final_query
     
     def _synthesize_results(self, intent_analysis: Dict, query_results: Dict, user_query: str) -> Dict[str, Any]:
-        """Phase 4: Synthesize document and database results into comprehensive answer"""
-        self._log_phase("🔀 Phase 4: Synthesizing results")
+        """Phase 4: Synthesize results using Tool 4 - Result Correlator"""
+        self._log_phase("🔀 Phase 4: Using Tool 4 - Result Correlator")
         
         try:
-            synthesis_prompt = f"""You are a business analyst. Combine document analysis with database results to answer this query comprehensively.
-
-User Question: "{user_query}"
-
-Document Results: {query_results.get('document_results', {}).get('response', 'No document results')}
-
-Database Results:
-{self._format_db_results_for_synthesis(query_results.get('database_results', []))}
-
-Document Concepts Extracted: {query_results.get('document_concepts', [])}
-
-Task: Provide a comprehensive business answer that:
-1. Compares document strategy/goals with actual database reality
-2. Identifies gaps, matches, or insights
-3. Provides actionable business recommendations
-4. Uses specific numbers from database when available
-5. References document context appropriately
-
-Format as business-friendly response with clear sections and insights."""
-
-            if not os.getenv('GOOGLE_API_KEY_SOL_4'):
+            document_content = ""
+            if query_results.get('document_results'):
+                document_content = query_results['document_results'].get('response', '')
+            
+            database_results = query_results.get('database_results', [])
+            
+            # Use Tool 4: Result Correlator
+            self._log_phase("🔧 Applying correlation tool...")
+            correlation_result = self.db_tools.correlate_results(
+                document_content=document_content,
+                database_results=database_results,
+                user_query=user_query
+            )
+            
+            if not correlation_result.get("success", False):
+                # Fallback to basic synthesis
+                self._log_phase("⚠️ Correlation tool failed, using basic synthesis")
                 return self._create_basic_synthesis(query_results, user_query)
             
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            response = model.generate_content(synthesis_prompt)
+            # Format comprehensive response using correlation results
+            final_response = self._format_tool_based_response(correlation_result, query_results)
             
-            final_answer = response.text.strip()
+            self._log_phase("✅ Tool-based synthesis completed")
             
-            self._log_phase("✅ Synthesis completed")
+            # Combine processing logs from all tools
+            all_logs = self.processing_log + self.db_tools.get_tools_log()
             
             return {
                 "success": True,
-                "response": final_answer,
-                "processing_log": self.processing_log,
+                "response": final_response,
+                "processing_log": all_logs,
                 "source_breakdown": {
                     "documents_used": query_results.get('document_results') is not None,
                     "database_tables_queried": len(query_results.get('database_results', [])),
-                    "concepts_extracted": len(query_results.get('document_concepts', []))
-                }
+                    "concepts_extracted": len(query_results.get('document_concepts', [])),
+                    "tools_used": ["database_discovery", "table_analyzer", "query_executor", "result_correlator"],
+                    "correlation_confidence": correlation_result.get("correlation_confidence", "N/A")
+                },
+                "correlation_analysis": correlation_result
             }
             
         except Exception as e:
-            return self._create_error_response(f"Result synthesis failed: {str(e)}")
+            return self._create_error_response(f"Tool-based synthesis failed: {str(e)}")
+    
+    def _format_tool_based_response(self, correlation_result: Dict, query_results: Dict) -> str:
+        """Format final response using tool-based correlation analysis"""
+        response = "# 🤖 Smart Agent Analysis\n\n"
+        
+        # Overview from correlation tool
+        correlation = correlation_result.get("correlation", "")
+        if correlation:
+            response += f"## 🔍 Document vs Database Analysis\n{correlation}\n\n"
+        
+        # Key insights from tools
+        insights = correlation_result.get("insights", [])
+        if insights:
+            response += "## 💡 Key Business Insights\n"
+            for insight in insights:
+                response += f"• {insight}\n"
+            response += "\n"
+        
+        # Strategy gaps identified by tools
+        gaps = correlation_result.get("gaps", [])
+        if gaps:
+            response += "## ⚠️ Strategy-Reality Gaps\n"
+            for gap in gaps:
+                response += f"• {gap}\n"
+            response += "\n"
+        
+        # Areas where strategy matches reality
+        matches = correlation_result.get("matches", [])
+        if matches:
+            response += "## ✅ Strategic Alignment\n"
+            for match in matches:
+                response += f"• {match}\n"
+            response += "\n"
+        
+        # Actionable recommendations from tools
+        recommendations = correlation_result.get("recommendations", [])
+        if recommendations:
+            response += "## 🎯 Recommended Actions\n"
+            for i, rec in enumerate(recommendations, 1):
+                response += f"{i}. {rec}\n"
+            response += "\n"
+        
+        # Supporting database evidence
+        db_results = query_results.get('database_results', [])
+        if db_results:
+            response += "## 📊 Supporting Database Evidence\n"
+            for result in db_results:
+                table = result['table']
+                count = result['row_count']
+                interpretation = result.get('business_interpretation', '')
+                response += f"**{table.title()}**: {count} records"
+                if interpretation:
+                    response += f" - {interpretation}"
+                response += "\n"
+        
+        return response
     
     def _format_db_results_for_synthesis(self, db_results: List[Dict]) -> str:
         """Format database results for AI synthesis"""
@@ -487,6 +375,31 @@ Format as business-friendly response with clear sections and insights."""
             formatted += "\n"
         
         return formatted
+    
+    def _extract_initial_document_concepts(self, user_query: str, intent_analysis: Dict) -> List[Dict]:
+        """Extract document concepts early for database relevance scoring"""
+        try:
+            if not self.rag_processor:
+                return []
+            
+            # Quick document search to get concepts
+            doc_keywords = intent_analysis.get('document_keywords', [user_query])
+            search_query = " ".join(doc_keywords)
+            
+            rag_result = self.rag_processor.process_query(search_query, use_reranking=False, final_results=2)
+            document_content = rag_result.get('response', '')
+            
+            # Use Tool 5 to extract concepts
+            concept_result = self.db_tools.extract_document_concepts(document_content, user_query)
+            
+            if concept_result.get("success", False):
+                return concept_result.get("concepts", [])
+            else:
+                return []
+                
+        except Exception as e:
+            self._log_phase(f"Early concept extraction failed: {str(e)}")
+            return []
     
     def _create_basic_synthesis(self, query_results: Dict, user_query: str) -> Dict[str, Any]:
         """Create basic synthesis when AI is not available"""

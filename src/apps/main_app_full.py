@@ -543,7 +543,7 @@ def get_system_status():
 🤖 **AI Models:**
 - Embeddings: ✅ Ready
 - Reranker: ⏸️ Disabled for stability
-- Response Generator: {'✅ Gemini 1.5 Flash' if os.getenv('GOOGLE_API_KEY_SOL_4') else '❌ API key needed'}
+- Response Generator: {'✅ Gemini 2.5 Flash' if os.getenv('GOOGLE_API_KEY_SOL_4') else '❌ API key needed'}
 
 💾 **Memory Features:**
 - Conversation History: ✅ Persistent
