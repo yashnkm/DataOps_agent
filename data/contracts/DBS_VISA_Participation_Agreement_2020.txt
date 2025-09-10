@@ -1,0 +1,93 @@
+DBS BANK - VISA PARTICIPATION AGREEMENT
+Contract Number: DBS-VISA-2020-001
+Effective Date: September 13, 2020
+
+ADDENDUM TO PARTICIPATION AGREEMENT
+
+This Addendum ("Addendum") is entered into as of September 13, 2020, by and between DBS BANK ("Participant") and VISA ("Service Provider").
+
+This Addendum modifies the Participation Agreement dated [Insert Original Agreement Date] ("Agreement") and is incorporated therein by reference. All capitalized terms not defined herein shall have the meanings ascribed to them in the Agreement.
+
+RECITALS
+
+WHEREAS, the parties wish to amend certain provisions of the Agreement to reflect updated terms and conditions;
+
+NOW, THEREFORE, in consideration of the mutual covenants and agreements contained herein, the parties agree as follows:
+
+1. Scope of Services
+
+The following services shall be added to the Scope of Services:
+
+• Expanded Network Access: PULSE shall provide access to an expanded network of international ATMs and POS terminals.
+
+• Enhanced Fraud Protection: Real-time fraud detection and alerting services shall be included as part of the standard service package.
+
+2. Fees
+
+Effective September 13, 2020, the following fee structure shall replace the existing fee schedule:
+
+• Standard transaction processing fee shall be discounted by $0.005 per transaction
+• The fixed fee component shall be discounted by $0.025 per transaction
+• The US Issuer ATM fee shall be discounted by $0.15 per transaction
+• Debit Protect service fees shall be waived entirely
+• Network security fee remains at $200 per month
+• Acquirer ATM fee shall be set at $0.005 per transaction
+
+3. International Transaction Fees
+
+For cross-border and international transactions:
+• Cross-border processing fee: $1.50 per transaction (discounted from $2.00)
+• Currency conversion fee: 1.2% of transaction amount
+• International ATM access fee: $0.50 per transaction
+
+4. Interchange Fees
+
+Interchange fees for card-present transactions:
+• Debit card transactions: 1.2% + $0.10 (discounted from 1.5% + $0.15)
+• Credit card transactions: 2.2% + $0.20 (discounted from 2.5% + $0.25)
+• Premium card transactions: 3.1% + $0.30
+
+5. Reporting and Compliance
+
+Participant shall submit quarterly compliance and performance reports to VISA, beginning [Insert Start Date].
+
+The reports shall include:
+• Transaction volume statistics
+• Fee reconciliation reports
+• Fraud detection metrics
+• Network availability reports
+• Customer satisfaction scores
+
+6. Service Level Agreements
+
+VISA commits to the following service levels:
+• Network uptime: 99.9% monthly availability
+• Transaction processing time: Maximum 3 seconds for authorization
+• Dispute resolution: 30 days maximum resolution time
+• Customer support: 24/7 multilingual support
+
+7. Modification to Article 3 – Term and Termination
+
+The term of the Agreement is hereby extended by 2 additional years, resulting in a new termination date of [Insert New Termination Date].
+
+8. Miscellaneous
+
+• Entire Agreement: This Addendum, together with the Agreement, constitutes the entire agreement between the parties with respect to the subject matter hereof.
+
+• Conflict: In the event of any conflict between this Addendum and the Agreement, the terms of this Addendum shall prevail.
+
+• Ratification: Except as expressly modified herein, all other terms and conditions of the Agreement shall remain in full force and effect.
+
+IN WITNESS WHEREOF, the parties have executed this Addendum as of the date first written above.
+
+DBS BANK
+By: _______________________
+Name: [Senior Vice President]
+Title: Head of Payment Services
+Date: September 13, 2020
+
+VISA
+By: _______________________  
+Name: [Regional Director]
+Title: Head of Bank Relations, Asia Pacific
+Date: September 13, 2020

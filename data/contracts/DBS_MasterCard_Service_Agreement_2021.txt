@@ -1,0 +1,113 @@
+DBS BANK - MASTERCARD SERVICE AGREEMENT
+Contract Number: DBS-MC-2021-001
+Effective Date: January 15, 2021
+
+MASTERCARD ACQUIRING AND PROCESSING AGREEMENT
+
+This Agreement is entered into between DBS BANK ("Acquirer") and MASTERCARD INTERNATIONAL ("MasterCard") effective January 15, 2021.
+
+TERMS AND CONDITIONS
+
+1. Service Scope
+
+MasterCard agrees to provide the following services:
+• Transaction processing and authorization
+• Settlement and clearing services
+• Fraud monitoring and prevention
+• Chargeback and dispute management
+• Regulatory compliance support
+
+2. Fee Structure
+
+The following fees apply to all transactions processed under this agreement:
+
+Transaction Processing Fees:
+• ATM withdrawal processing: $0.008 per transaction (discounted from $0.012)
+• Point-of-sale processing: $0.140 per transaction (discounted from $0.180)
+• Online/CNP transactions: $0.160 per transaction
+• Contactless payments: $0.120 per transaction
+
+Interchange Fees:
+• Standard debit cards: 1.1% + $0.08 (discounted from 1.45% + $0.12)
+• Standard credit cards: 2.1% + $0.18
+• Premium credit cards: 3.2% + $0.25
+• Corporate cards: 2.8% + $0.20
+
+Monthly Service Fees:
+• Account maintenance: $150 per month
+• Fraud monitoring: $75 per month
+• Compliance reporting: $50 per month
+• Customer support: Included
+
+3. Chargeback Fees
+
+Chargeback processing fees:
+• Pre-arbitration: $25 per case
+• Arbitration filing: $100 per case
+• Representment: $15 per case
+• Administrative fee: $10 per chargeback
+
+4. International Transactions
+
+Cross-border transaction fees:
+• International processing: $1.25 per transaction
+• Currency conversion: 1.0% of transaction amount
+• Cross-border assessment: 0.8% of transaction amount
+
+5. Volume Incentives
+
+Volume-based discounts apply:
+• Tier 1 (1M-5M transactions/month): 5% discount on processing fees
+• Tier 2 (5M-10M transactions/month): 8% discount on processing fees
+• Tier 3 (10M+ transactions/month): 12% discount on processing fees
+
+6. Performance Standards
+
+MasterCard commits to:
+• 99.95% network availability
+• Average authorization response time: 2.5 seconds
+• Settlement completion: T+1 business day
+• 24/7 technical support
+
+7. Compliance Requirements
+
+DBS BANK must maintain:
+• PCI DSS Level 1 compliance
+• Anti-money laundering programs
+• Know Your Customer (KYC) procedures
+• Monthly transaction monitoring reports
+• Quarterly compliance audits
+
+8. Data Security
+
+Both parties agree to:
+• Encrypt all cardholder data in transit and at rest
+• Implement tokenization for stored payment data
+• Conduct regular security assessments
+• Report any data breaches within 24 hours
+• Maintain cyber insurance coverage
+
+9. Term and Termination
+
+This agreement shall remain in effect for 3 years from the effective date, with automatic renewal for additional 1-year terms unless terminated by either party with 90 days written notice.
+
+10. Dispute Resolution
+
+All disputes shall be resolved through:
+• Initial negotiation period: 30 days
+• Mediation if negotiation fails: 60 days
+• Binding arbitration as final resort
+
+IN WITNESS WHEREOF, the parties have executed this Agreement.
+
+DBS BANK
+By: _______________________
+Name: [Chief Financial Officer]
+Title: Head of Treasury Operations
+Date: January 15, 2021
+
+MASTERCARD INTERNATIONAL
+By: _______________________
+Name: [Vice President]
+Title: Head of Acquiring Relations
+Date: January 15, 2021

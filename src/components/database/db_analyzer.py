@@ -6,6 +6,10 @@ from sqlalchemy.engine import Engine
 import google.generativeai as genai
 from typing import Dict, Any, List, Optional, Tuple
 import json
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 class DatabaseAnalyzer:

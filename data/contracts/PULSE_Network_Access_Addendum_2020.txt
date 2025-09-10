@@ -1,0 +1,132 @@
+PULSE NETWORK ACCESS ADDENDUM
+Contract Number: PULSE-DBS-2020-ADD
+Effective Date: September 13, 2020
+
+ADDENDUM TO PULSE NETWORK PARTICIPATION AGREEMENT
+
+This Network Access Addendum ("Addendum") supplements the existing PULSE Network Participation Agreement between DBS BANK ("Financial Institution") and PULSE NETWORK ("PULSE").
+
+ENHANCED NETWORK SERVICES
+
+1. Expanded ATM Network Access
+
+PULSE grants DBS BANK access to:
+• Over 400,000 ATMs across the United States
+• International ATM networks in 45+ countries
+• Surcharge-free ATM locations for premium customers
+• Enhanced ATM locator services
+
+2. Network Access Fees
+
+The following fee structure applies to network access services:
+
+ATM Transaction Fees:
+• Network access fee: $0.050 per transaction (discounted from $0.075)
+• Switch processing fee: $0.020 per transaction (discounted from $0.025)
+• International ATM fee: $0.150 per transaction
+• Balance inquiry fee: $0.010 per transaction
+
+Monthly Network Fees:
+• Network participation: $500 per month
+• Enhanced routing: $200 per month
+• International access: $300 per month
+• Premium services: $150 per month
+
+3. Interchange and Settlement
+
+PULSE will handle:
+• Real-time transaction authorization
+• End-of-day settlement processing
+• Multi-currency transaction support
+• Automated clearing house (ACH) integration
+
+Settlement Fees:
+• Domestic settlement: $0.005 per transaction
+• International settlement: $0.025 per transaction
+• Currency conversion: 0.5% of transaction amount
+• Failed transaction fee: $1.00 per occurrence
+
+4. Fraud Prevention Services
+
+PULSE provides advanced fraud detection:
+• Real-time transaction monitoring
+• Velocity checking and limits
+• Geographic transaction analysis
+• Suspicious pattern recognition
+• 24/7 fraud alert notifications
+
+Fraud Service Fees:
+• Basic fraud monitoring: Included
+• Advanced analytics: $100 per month
+• Custom rule configuration: $50 per setup
+• Fraud investigation: $25 per case
+
+5. Network Performance Standards
+
+PULSE guarantees:
+• 99.8% network uptime
+• Average response time: 4 seconds
+• Transaction authorization rate: 99.5%
+• Dispute resolution: 45 days maximum
+
+6. Reporting and Analytics
+
+Monthly reports include:
+• Transaction volume by ATM location
+• Fee reconciliation statements
+• Network performance metrics
+• Fraud detection statistics
+• Customer usage patterns
+
+7. Technical Integration
+
+PULSE will provide:
+• API access for real-time integration
+• Test environment for development
+• Technical documentation and support
+• Migration assistance and training
+• Ongoing system maintenance
+
+Integration Fees:
+• Initial setup: $2,500 one-time fee
+• API access: $100 per month
+• Technical support: $150 per incident
+• System maintenance: Included in monthly fees
+
+8. Service Level Agreements
+
+Performance metrics and penalties:
+• Network downtime exceeding 0.2% results in 10% monthly fee credit
+• Response time exceeding 5 seconds results in 5% fee credit
+• Authorization failures exceeding 1% result in transaction fee waiver
+
+9. Data Security and Compliance
+
+Both parties must maintain:
+• PCI DSS compliance certification
+• SOX compliance for financial reporting
+• Regular security audits and assessments
+• Incident response procedures
+• Data retention policies per regulation
+
+10. Contract Modifications
+
+This addendum may only be modified through written agreement signed by authorized representatives of both parties. All other terms of the original PULSE Network Participation Agreement remain in full force and effect.
+
+11. Effective Period
+
+This addendum is effective from September 13, 2020, and shall remain in effect for the duration of the underlying PULSE Network Participation Agreement.
+
+SIGNATURES
+
+DBS BANK
+By: _______________________
+Name: [Senior Vice President]
+Title: Head of Digital Banking
+Date: September 13, 2020
+
+PULSE NETWORK
+By: _______________________
+Name: [Regional Director]
+Title: Network Relations Manager
+Date: September 13, 2020

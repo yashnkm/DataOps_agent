@@ -15,6 +15,7 @@ from components.rag_engine.rag_processor import RAGProcessor
 from components.memory.session_manager import SessionManager
 from components.database.db_query_interface import DatabaseQueryInterface
 from components.hybrid.hybrid_query_agent import HybridQueryAgent
+from components.compliance.working_compliance import WorkingComplianceMonitor
 
 # Load environment variables
 load_dotenv()
@@ -878,6 +879,29 @@ with gr.Blocks(
         
         clear_nl_btn.click(lambda: ("", "", ""), outputs=[nl_query_input, nl_results, sql_generated])
         clear_sql_btn.click(lambda: ("", "", ""), outputs=[sql_input, sql_results, sql_generated])
+    
+    # Contract Compliance Tab (Working Version with Real Data)
+    with gr.Tab("📋 Contract Compliance"):
+        # Initialize with existing components for real functionality
+        vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
+        
+        # Create working compliance monitor with real components
+        working_compliance = WorkingComplianceMonitor(
+            vector_store=vs,
+            rag_processor=rag,
+            db_analyzer=db_int.db_analyzer if db_int else None
+        )
+        
+        # Create full compliance interface with all sections
+        with gr.Row():
+            # LEFT SECTION: Real contract query with FAISS
+            working_compliance.create_left_section_interface()
+            
+            # CENTER SECTION: Real transaction display
+            working_compliance.create_center_section_interface()
+            
+            # RIGHT SECTION: Discrepancy detection and analysis
+            working_compliance.create_right_section_interface()
     
     # System Status Tab
     with gr.Tab("📊 System Status"):
