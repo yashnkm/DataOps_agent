@@ -1,6 +1,6 @@
 """
 Real Working Contract Compliance System
-Part 1: Document Query Section with actual FAISS vector store
+Part 1: Document Query Section with vector store
 """
 
 import os
@@ -72,9 +72,9 @@ class WorkingComplianceMonitor:
         }
         
     def _init_vector_store(self):
-        """Initialize FAISS vector store if not provided"""
+        """Initialize vector store if not provided"""
         try:
-            print("🔄 Initializing FAISS vector store for compliance...")
+            print("🔄 Initializing vector store for compliance...")
             vs = FAISSVectorStore()
             
             # Check if we have documents
@@ -147,7 +147,7 @@ class WorkingComplianceMonitor:
     
     def query_contracts_with_vector_search(self, query: str) -> str:
         """
-        Real contract query using FAISS vector search
+        Real contract query using vector search
         
         Args:
             query: User's question about contracts

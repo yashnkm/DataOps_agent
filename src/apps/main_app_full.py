@@ -45,7 +45,7 @@ def initialize_components():
         session_manager = SessionManager()
     
     if vector_store is None:
-        print("🔄 Initializing FAISS vector store...")
+        print("🔄 Initializing vector store...")
         vector_store = FAISSVectorStore()
     
     if doc_processor is None:
@@ -134,7 +134,7 @@ def upload_documents_with_memory(files: List[Any]) -> Tuple[str, str, str]:
         if processing_results['processed_files'] == 0:
             return f"❌ No files processed successfully\nErrors: {'; '.join(processing_results['errors'])}", get_document_list(), get_session_info()
         
-        # Store in FAISS
+        # Store in vector database
         all_chunks = []
         for doc in processing_results['documents']:
             all_chunks.extend(doc['chunks'])
@@ -152,7 +152,7 @@ def upload_documents_with_memory(files: List[Any]) -> Tuple[str, str, str]:
         
         response = f"✅ Successfully processed {processing_results['processed_files']} new files\n"
         response += f"📄 Created {processing_results['total_chunks']} text chunks\n"
-        response += f"💾 Stored {storage_results['stored_count']} chunks in FAISS\n"
+        response += f"💾 Stored {storage_results['stored_count']} chunks in vector store\n"
         response += f"📊 Total documents in store: {storage_results['total_documents']}\n"
         
         if skipped_files:
@@ -507,7 +507,7 @@ def smart_agent_query(query: str) -> Tuple[str, str]:
 
 # Main Gradio Interface with Memory
 with gr.Blocks(
-    title="FAISS RAG System with Memory", 
+    title="Document Chat System", 
     theme=gr.themes.Default(),
     css="""
     .gradio-container {max-width: 1400px !important}
@@ -545,8 +545,8 @@ with gr.Blocks(
 ) as app:
     
     # Header
-    gr.Markdown("# 🔍 FAISS RAG System with Memory")
-    gr.Markdown("**Intelligent Document Q&A with Session Management & Conversation Memory**")
+    gr.Markdown("# 📋 Document Analytics System")
+    gr.Markdown("**Intelligent Document Processing and Analysis Platform**")
     
     # Documents Management Tab
     with gr.Tab("📁 Documents"):
@@ -606,55 +606,47 @@ with gr.Blocks(
     
     # Chat Interface with Memory
     with gr.Tab("💬 Smart Chat"):
-        gr.Markdown("### 💬 Context-Aware Document Chat")
-        gr.Markdown("*Remembers conversation context and provides smarter responses*")
+        gr.Markdown("### 💬 Document Chat Assistant")
+        gr.Markdown("*Ask questions about your uploaded documents*")
+        
+        # Full-width chat interface
+        chatbot = gr.Chatbot(
+            label="Document Chat Assistant", 
+            height=700,
+            type="messages",
+            show_label=True,
+            avatar_images=["👤", "🤖"],
+        )
         
         with gr.Row():
-            with gr.Column(scale=3):
-                chatbot = gr.Chatbot(
-                    label="Memory-Enhanced RAG Assistant", 
-                    height=600,
-                    type="messages",
-                    show_label=True,
-                    avatar_images=["👤", "🧠"],
-                        )
-                
-                with gr.Row():
-                    msg = gr.Textbox(
-                        label="Ask about your documents...",
-                        placeholder="What do you want to know? (Press Enter to send)",
-                        scale=5,
-                        lines=2,
-                        autofocus=True
-                    )
-                    send_btn = gr.Button("📤 Send", scale=1, variant="primary", size="lg")
-                
-                with gr.Row():
-                    clear_chat_btn = gr.Button("🗑️ Clear Chat", variant="secondary")
-                    new_session_btn = gr.Button("🆕 New Session", variant="secondary")
-            
-            with gr.Column(scale=1):
-                session_display = gr.Textbox(
-                    label="🔐 Current Session",
-                    lines=8,
-                    interactive=False
-                )
+            msg = gr.Textbox(
+                label="Ask about your documents...",
+                placeholder="What do you want to know? (Press Enter to send)",
+                scale=5,
+                lines=2,
+                autofocus=True
+            )
+            send_btn = gr.Button("📤 Send", scale=1, variant="primary", size="lg")
         
-        # Chat events
+        with gr.Row():
+            clear_chat_btn = gr.Button("🗑️ Clear Chat", variant="secondary")
+            new_session_btn = gr.Button("🆕 New Session", variant="secondary")
+        
+        # Chat events - simplified without session display
         send_btn.click(
-            fn=rag_chat_with_memory,
+            fn=lambda msg_input, history: rag_chat_with_memory(msg_input, history)[0:2],  # Only return msg and history
             inputs=[msg, chatbot],
-            outputs=[msg, chatbot, session_display]
+            outputs=[msg, chatbot]
         )
         
         msg.submit(
-            fn=rag_chat_with_memory,
+            fn=lambda msg_input, history: rag_chat_with_memory(msg_input, history)[0:2],  # Only return msg and history
             inputs=[msg, chatbot],
-            outputs=[msg, chatbot, session_display]
+            outputs=[msg, chatbot]
         )
         
-        clear_chat_btn.click(lambda: ([], get_session_info()), outputs=[chatbot, session_display])
-        new_session_btn.click(fn=new_session, outputs=[chatbot, upload_status, document_list, session_display])
+        clear_chat_btn.click(lambda: [], outputs=[chatbot])
+        new_session_btn.click(fn=lambda: ([], ""), outputs=[chatbot, upload_status])
     
     # Database Interface Tab - Simplified Table Viewer
     with gr.Tab("🗄️ Database"):
@@ -839,7 +831,7 @@ with gr.Blocks(
         
         # Create full compliance interface with all sections
         with gr.Row():
-            # LEFT SECTION: Real contract query with FAISS
+            # LEFT SECTION: Contract query interface
             working_compliance.create_left_section_interface()
             
             # CENTER SECTION: Real transaction display
@@ -855,8 +847,8 @@ with gr.Blocks(
     )
 
 if __name__ == "__main__":
-    print("🧠 Starting FAISS RAG system with memory management...")
-    print("💾 Session-based conversation tracking enabled")
+    print("📋 Starting Document Analytics System...")
+    print("💾 Document processing and analysis enabled")
     print("🌐 Opening browser interface...")
     
     app.launch(
