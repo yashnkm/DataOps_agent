@@ -2,8 +2,7 @@ import os
 import pickle
 from typing import List, Dict, Any, Optional
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+# Removed unused imports for HuggingFace and Google embeddings
 from langchain.schema import Document
 
 
@@ -22,75 +21,11 @@ class FAISSVectorStore:
         self._load_existing_store()
     
     def _initialize_embeddings(self):
-        """Initialize embedding model with multiple fallback strategies"""
-        strategies = [
-            self._try_sentence_transformers,
-            self._try_huggingface_embeddings,
-            self._try_local_embeddings_fallback
-        ]
-        
-        for i, strategy in enumerate(strategies, 1):
-            try:
-                print(f"🔄 Trying embedding strategy {i}/{len(strategies)}...")
-                if strategy():
-                    return
-            except Exception as e:
-                print(f"Strategy {i} failed: {e}")
-                continue
-        
-        raise RuntimeError("All embedding initialization strategies failed")
-    
-    def _try_sentence_transformers(self):
-        """Try sentence-transformers with proper device handling"""
-        try:
-            from sentence_transformers import SentenceTransformer
-            import torch
-            
-            print("🔄 Initializing sentence-transformers...")
-            
-            # Force CPU usage
-            device = 'cpu'
-            model_name = 'all-MiniLM-L6-v2'
-            
-            # Initialize with explicit device
-            self.embedding_model = SentenceTransformer(model_name, device=device)
-            
-            # Test encoding
-            test_result = self.embedding_model.encode(["test"], convert_to_tensor=False)
-            if len(test_result) > 0:
-                self.embeddings = self._create_embedding_function()
-                print("✅ Sentence-transformers initialized successfully")
-                return True
-            
-        except Exception as e:
-            print(f"Sentence-transformers failed: {e}")
-            return False
-    
-    def _try_huggingface_embeddings(self):
-        """Try HuggingFace embeddings fallback"""
-        try:
-            print("🔄 Trying HuggingFace embeddings...")
-            self.embeddings = HuggingFaceEmbeddings(
-                model_name='all-MiniLM-L6-v2',
-                model_kwargs={'device': 'cpu'},
-                encode_kwargs={'device': 'cpu', 'batch_size': 1}
-            )
-            # Test encoding
-            test_result = self.embeddings.embed_query("test")
-            if len(test_result) > 0:
-                print("✅ HuggingFace embeddings initialized successfully")
-                return True
-                
-        except Exception as e:
-            print(f"HuggingFace embeddings failed: {e}")
-            return False
-    
-    def _try_local_embeddings_fallback(self):
-        """Try local embeddings fallback (no external models)"""
+        """Initialize local embedding model"""
         try:
             from .local_embeddings import RobustLocalEmbeddings
             
-            print("🔄 Initializing local embeddings fallback...")
+            print("🔄 Initializing local embeddings...")
             cache_dir = os.path.join(self.persist_directory, "local_embeddings")
             self.local_embedder = RobustLocalEmbeddings(cache_dir)
             self.embeddings = self._create_local_embedding_function()
@@ -98,28 +33,15 @@ class FAISSVectorStore:
             # Test encoding
             test_result = self.embeddings.embed_query("test")
             if len(test_result) > 0:
-                print("✅ Local embeddings fallback initialized successfully")
-                return True
+                print("✅ Local embeddings initialized successfully")
+                return
                 
         except Exception as e:
-            print(f"Local embeddings fallback failed: {e}")
-            return False
+            print(f"Local embeddings initialization failed: {e}")
+            raise RuntimeError(f"Failed to initialize local embeddings: {e}")
     
-    def _create_embedding_function(self):
-        """Create embedding function compatible with FAISS"""
-        from langchain.embeddings.base import Embeddings
-        
-        class CustomEmbeddings(Embeddings):
-            def __init__(self, model):
-                self.model = model
-            
-            def embed_documents(self, texts):
-                return self.model.encode(texts).tolist()
-            
-            def embed_query(self, text):
-                return self.model.encode([text])[0].tolist()
-        
-        return CustomEmbeddings(self.embedding_model)
+    
+    
     
     def _create_local_embedding_function(self):
         """Create local embedding function compatible with FAISS"""
@@ -235,13 +157,11 @@ class FAISSVectorStore:
         """Get information about the vector store"""
         # Determine embedding model info
         embedding_info = 'Unknown'
-        if hasattr(self, 'embedding_model') and self.embedding_model:
-            embedding_info = 'Sentence-Transformers'
-        elif hasattr(self, 'local_embedder') and self.local_embedder:
+        if hasattr(self, 'local_embedder') and self.local_embedder:
             local_info = self.local_embedder.get_embedding_info()
             embedding_info = f"Local ({local_info['method']})"
-        elif self.embeddings:
-            embedding_info = 'HuggingFace'
+        else:
+            embedding_info = 'Local Embeddings'
         
         return {
             'total_documents': self.vector_store.index.ntotal if self.vector_store else 0,

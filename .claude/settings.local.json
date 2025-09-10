@@ -5,7 +5,8 @@
       "Bash(mv:*)",
       "Bash(rm:*)",
       "Bash(cp:*)",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []

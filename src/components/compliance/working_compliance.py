@@ -1051,7 +1051,6 @@ Database connection required for live analysis.
                             ai_results = gr.Dataframe(
                                 label="AI-Detected Discrepancies",
                                 wrap=True,
-                                max_rows=20,
                                 datatype=["str", "str", "str", "str", "str", "str", "str", "str", "str", "str", "str", "str"],
                                 column_widths=["10%", "10%", "10%", "10%", "15%", "8%", "8%", "8%", "8%", "5%", "8%", "10%"]
                             )

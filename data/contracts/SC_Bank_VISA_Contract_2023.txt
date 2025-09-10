@@ -1,0 +1,80 @@
+SECOND AMENDMENT TO THE PARTICIPATION AGREEMENT
+
+Contract ID: SCB-VISA-2023-002
+Effective Date: August 29, 2023
+
+PARTIES:
+Participant: SC BANK
+Service Provider: VISA
+
+AGREEMENT OVERVIEW:
+This second amendment to the participation Agreement is effective as of date 29 August 2023 made and entered into by and between SC Bank and VISA. The parties agree to the terms and conditions set forth herein.
+
+WITNESSTH:
+Whereas, PULSE and participant wishes to establish rules.
+
+ARTICLE 1 - DEFINITIONS
+
+• "Confidential Information" means any non-public information disclosed by either party.
+• "Services" means the financial and network services provided by the Service Provider.
+
+ARTICLE 2 - REPRESENTATION AND WARRANTIES
+
+2.1 Organization and standing
+2.2 Power and authority
+
+SCOPE OF SERVICES:
+• Description of Services: The Service Provider agrees to provide the following services: [Detailed description of services].
+• Responsibilities: The Client agrees to: [Client responsibilities].
+
+ARTICLE 3 - TERM AND TERMINATION
+
+3.1 Term: Terminate 10 years after the effective date of contract
+3.2 Termination: Non Renewal
+
+FEES AND PAYMENT TERMS:
+4.3 Fees: Customer shall pay fees in accordance with issuer fee schedule.
+
+EXHIBIT A - FEE SCHEDULE:
+
+Fee Category                    Charges
+Transaction Processing Fees     $0.05 per transaction
+Interchange Fees               1.75% of transaction amount  
+Service Charges                $500 per month
+Optional Program Fees          $1,000 annually
+
+REPRESENTATIONS AND WARRANTIES:
+• Service Provider Warranties: The Service Provider warrants that it will perform the Services in a professional manner.
+• Client Warranties: The Client warrants that it has the authority to enter into this Agreement.
+
+INDEMNIFICATION:
+• Indemnity Clauses: Each party agrees to indemnify and hold harmless the other party from any claims arising out of the performance of this Agreement.
+
+LIMITATION OF LIABILITY:
+• Liability Cap: The total liability of either party shall not exceed the total fees paid under this Agreement.
+
+ARBITRATION/MEDIATION:
+Any disputes arising under this Agreement shall be resolved through arbitration in [Location].
+
+GOVERNING LAW:
+This Agreement shall be governed by the laws of [State/Country].
+
+MISCELLANEOUS:
+• Amendments: This Agreement may be amended only by a written agreement signed by both parties.
+• Assignment: Neither party may assign this Agreement without the prior written consent of the other party.
+• Notices: All notices shall be sent to the addresses listed above.
+
+SIGNATURES:
+IN WITNESS WHEREOF, the parties have executed this Agreement as of the Effective Date.
+
+SC BANK
+By: _________________
+Name: [Authorized Signatory]
+Title: [Title]
+Date: August 29, 2023
+
+VISA
+By: _________________
+Name: [Authorized Signatory]
+Title: [Title] 
+Date: August 29, 2023

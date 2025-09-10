@@ -1,0 +1,50 @@
+ADDENDUM TO PARTICIPATION AGREEMENT
+
+Contract ID: DBS-VISA-2020-001
+Effective Date: September 13, 2020
+
+PARTIES:
+Participant: DBS BANK
+Service Provider: VISA
+
+AGREEMENT OVERVIEW:
+This Addendum modifies the Participation Agreement dated [Insert Original Agreement Date] and is incorporated therein by reference. All capitalized terms not defined herein shall have the meanings ascribed to them in the Agreement.
+
+SCOPE OF SERVICES:
+1. Expanded Network Access: PULSE shall provide access to an expanded network of international ATMs and POS terminals.
+2. Enhanced Fraud Protection: Real-time fraud detection and alerting services shall be included as part of the standard service package.
+
+FEES AND CHARGES:
+Effective 13 September 2020, the following fee structure applies:
+
+• Standard transactions shall be discounted by $0.005
+• The fixed fee component shall be discounted by $0.025  
+• The US Issuer ATM fee shall be discounted by $0.15
+• Debit Protect shall be waived
+• Network security fee: $200
+• Acquirer ATM fee: $0.005
+
+TERM AND TERMINATION:
+The term of the Agreement is hereby extended by 2 additional years, resulting in a termination date of [Insert New Termination Date].
+
+REPORTING AND COMPLIANCE:
+Participant shall submit quarterly compliance and performance reports to VISA, beginning [Insert Start Date].
+
+MISCELLANEOUS:
+• Entire Agreement: This Addendum, together with the Agreement, constitutes the entire agreement between the parties with respect to the subject matter hereof.
+• Conflict: In the event of any conflict between this Addendum and the Agreement, the terms of this Addendum shall prevail.
+• Ratification: Except as expressly modified herein, all other terms and conditions of the Agreement shall remain in full force and effect.
+
+IN WITNESS WHEREOF, the parties have executed this Addendum as of the date first written above.
+
+DBS Bank
+By: _________________
+Name: [Authorized Signatory]
+Title: [Title]
+Date: September 13, 2020
+
+VISA
+By: _________________  
+Name: [Authorized Signatory]
+Title: [Title]
+Date: September 13, 2020

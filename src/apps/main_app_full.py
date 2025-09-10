@@ -16,6 +16,7 @@ from components.memory.session_manager import SessionManager
 from components.database.db_query_interface import DatabaseQueryInterface
 from components.hybrid.hybrid_query_agent import HybridQueryAgent
 from components.compliance.working_compliance import WorkingComplianceMonitor
+from components.dashboard.contract_dashboard import ContractDashboard
 
 # Load environment variables
 load_dotenv()
@@ -504,71 +505,6 @@ def smart_agent_query(query: str) -> Tuple[str, str]:
     except Exception as e:
         return f"❌ Smart agent error: {str(e)}", f"Error occurred: {str(e)}"
 
-def get_system_status():
-    """Get current system status with session info"""
-    try:
-        vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
-        session_id = get_current_session()
-        
-        # Cleanup expired sessions
-        expired_count = sess_mgr.cleanup_expired_sessions()
-        
-        store_info = vs.get_store_info()
-        session_stats = sess_mgr.get_session_stats(session_id)
-        
-        # Database status
-        db_overview = db_int.get_database_overview()
-        db_status = "✅ Connected" if db_overview.get("success", False) else "❌ Disconnected"
-        db_tables = db_overview.get("table_count", 0) if db_overview.get("success", False) else 0
-        
-        status = f"""**🔍 FAISS RAG System Status**
-
-🔑 **Google AI API:** {'✅ Configured' if os.getenv('GOOGLE_API_KEY_SOL_4') else '❌ Not configured'}
-
-🗄️ **Database Connection:**
-- Status: {db_status}
-- Tables: {db_tables}
-- Query Interface: ✅ Ready
-
-🔐 **Session Management:**
-- Current Session: `{session_id[:12]}...`
-- Session Messages: {session_stats['message_count']}
-- Session Documents: {session_stats['document_count']} files
-- Expired Sessions Cleaned: {expired_count}
-
-📊 **Vector Store (FAISS):**
-- Total Chunks: {store_info['total_documents']}
-- Embedding Model: {store_info['embedding_model']}
-- Storage: {store_info['persist_directory']}
-
-🤖 **AI Models:**
-- Embeddings: ✅ Ready
-- Reranker: ⏸️ Disabled for stability
-- Response Generator: {'✅ Gemini 2.5 Flash' if os.getenv('GOOGLE_API_KEY_SOL_4') else '❌ API key needed'}
-
-💾 **Memory Features:**
-- Conversation History: ✅ Persistent
-- Session Context: ✅ Last {sess_mgr.max_context_length} messages
-- Document Tracking: ✅ Per-session
-- Auto Cleanup: ✅ 24-hour expiry
-
-🔄 **Hybrid Query Support:**
-- Document + Database: ✅ Available
-- Cross-Reference: ✅ Enabled
-- Session Tracking: ✅ Active
-
-📋 **Limits:**
-- Max files per upload: 50
-- Max file size: 100MB each
-- Context memory: {sess_mgr.max_context_length} messages
-- Session timeout: {sess_mgr.session_timeout_hours} hours
-"""
-        
-        return status
-        
-    except Exception as e:
-        return f"❌ Error getting system status: {str(e)}"
-
 # Main Gradio Interface with Memory
 with gr.Blocks(
     title="FAISS RAG System with Memory", 
@@ -720,165 +656,174 @@ with gr.Blocks(
         clear_chat_btn.click(lambda: ([], get_session_info()), outputs=[chatbot, session_display])
         new_session_btn.click(fn=new_session, outputs=[chatbot, upload_status, document_list, session_display])
     
-    # Database Interface Tab  
+    # Database Interface Tab - Simplified Table Viewer
     with gr.Tab("🗄️ Database"):
-        gr.Markdown("### 🗄️ PostgreSQL Database Interface")
-        gr.Markdown("*Query your database using natural language or direct SQL*")
+        gr.Markdown("### 🗄️ PostgreSQL Database Table Viewer")
         
-        with gr.Tab("🔍 Query Interface"):
-            with gr.Row():
-                with gr.Column(scale=2):
-                    gr.Markdown("#### 💬 Natural Language Query")
-                    nl_query_input = gr.Textbox(
-                        label="Ask about your database in plain English",
-                        placeholder="e.g., 'Show me all users created last month' or 'What are the top 10 products by sales?'",
-                        lines=3
-                    )
-                    
-                    with gr.Row():
-                        nl_query_btn = gr.Button("🔍 Execute Query", variant="primary")
-                        clear_nl_btn = gr.Button("🗑️ Clear", variant="secondary")
-                    
-                    nl_results = gr.Textbox(
-                        label="📊 Query Results",
-                        lines=10,
-                        interactive=False
-                    )
+        # Connection status
+        db_status = gr.Markdown("")
+        
+        with gr.Row():
+            # Dropdown for table selection
+            table_dropdown = gr.Dropdown(
+                label="Select a Table",
+                choices=[],
+                interactive=True,
+                scale=2
+            )
+            
+            refresh_tables_btn = gr.Button("🔄 Refresh Tables", variant="secondary", scale=1)
+        
+        # Display selected table data
+        table_display = gr.Dataframe(
+            label="Table Data",
+            interactive=False,
+            wrap=True
+        )
+        
+        # Row count info
+        table_info = gr.Markdown("")
+        
+        # Events for new database interface
+        def get_database_tables():
+            """Get list of all tables in the database"""
+            try:
+                vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
                 
-                with gr.Column(scale=2):
-                    gr.Markdown("#### 💻 Direct SQL Query")
-                    sql_input = gr.Textbox(
-                        label="Enter SQL query directly",
-                        placeholder="SELECT * FROM table_name LIMIT 10;",
-                        lines=4
-                    )
+                if db_int and db_int.db_analyzer:
+                    # Try to connect if not connected
+                    if db_int.db_analyzer.connection_status != "connected":
+                        db_int.db_analyzer.connect_to_database()
                     
-                    with gr.Row():
-                        sql_btn = gr.Button("▶️ Execute SQL", variant="primary")
-                        clear_sql_btn = gr.Button("🗑️ Clear", variant="secondary")
+                    if db_int.db_analyzer.connection_status == "connected":
+                        # Get table names
+                        overview = db_int.get_database_overview()
+                        if overview.get("success"):
+                            tables = list(overview.get("tables", {}).keys())
+                            status = f"✅ **Database Connected** - {len(tables)} tables found"
+                            return gr.update(choices=tables, value=tables[0] if tables else None), status
+                        else:
+                            return gr.update(choices=[]), "❌ **Database Error:** Could not fetch tables"
+                    else:
+                        return gr.update(choices=[]), "❌ **Database Not Connected** - Check your PostgreSQL connection"
+                else:
+                    return gr.update(choices=[]), "❌ **Database Interface Not Initialized**"
                     
-                    sql_results = gr.Textbox(
-                        label="📊 SQL Results", 
-                        lines=10,
-                        interactive=False
-                    )
-            
-            with gr.Row():
-                sql_generated = gr.Textbox(
-                    label="🔧 Generated SQL Query",
-                    lines=3,
-                    interactive=False,
-                    placeholder="Generated SQL will appear here..."
-                )
+            except Exception as e:
+                return gr.update(choices=[]), f"❌ **Error:** {str(e)}"
         
-        with gr.Tab("📊 Database Analysis"):
-            with gr.Row():
-                analyze_btn = gr.Button("🔍 Analyze Database Structure", variant="primary", size="lg")
-                refresh_analysis_btn = gr.Button("🔄 Refresh Analysis", variant="secondary")
+        def display_table_data(table_name):
+            """Display data from selected table"""
+            if not table_name:
+                return None, ""
             
-            analysis_display = gr.Markdown(
-                value="Click 'Analyze Database Structure' to inspect your PostgreSQL database",
-                label="Database Structure Analysis"
-            )
-        
-        with gr.Tab("📚 Query Examples"):
-            with gr.Row():
-                examples_btn = gr.Button("📖 Generate CRUD Examples", variant="primary", size="lg")
-                connection_btn = gr.Button("🔌 Check Connection", variant="secondary")
-            
-            examples_display = gr.Markdown(
-                value="Click 'Generate CRUD Examples' to see sample queries for your database",
-                label="CRUD Examples"
-            )
-            
-            connection_display = gr.Markdown(
-                value="Click 'Check Connection' to view database connection details",
-                label="Connection Information"
-            )
-        
-        with gr.Tab("🔄 Simple Hybrid"):
-            gr.Markdown("#### 🔄 Basic Document + Database Query")
-            gr.Markdown("*Simple combination of document search and database query*")
-            
-            hybrid_query_input = gr.Textbox(
-                label="Simple Hybrid Query",
-                placeholder="e.g., 'Show document content and related database records'",
-                lines=3
-            )
-            
-            with gr.Row():
-                use_docs_check = gr.Checkbox(label="📄 Include Documents", value=True)
-                use_db_check = gr.Checkbox(label="🗄️ Include Database", value=True)
-            
-            hybrid_btn = gr.Button("🔄 Execute Simple Query", variant="primary", size="lg")
-            
-            hybrid_results = gr.Textbox(
-                label="🔄 Simple Hybrid Results",
-                lines=12,
-                interactive=False
-            )
-        
-        with gr.Tab("🤖 Smart Agent"):
-            gr.Markdown("#### 🤖 Intelligent Hybrid Analysis Agent")
-            gr.Markdown("*Advanced agent that understands documents, analyzes database structure, and provides business insights*")
-            
-            agent_query_input = gr.Textbox(
-                label="Smart Agent Query", 
-                placeholder="e.g., 'Do we have enough high-income customers as mentioned in our strategy document?'",
-                lines=4
-            )
-            
-            agent_btn = gr.Button("🤖 Execute Smart Analysis", variant="primary", size="lg")
-            
-            with gr.Row():
-                with gr.Column(scale=2):
-                    agent_results = gr.Textbox(
-                        label="🤖 Agent Analysis Results",
-                        lines=15,
-                        interactive=False
-                    )
+            try:
+                vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
                 
-                with gr.Column(scale=1):
-                    agent_log = gr.Textbox(
-                        label="🔍 Agent Processing Log",
-                        lines=15,
-                        interactive=False,
-                        placeholder="Agent thinking process will appear here..."
-                    )
+                if db_int and db_int.db_analyzer:
+                    # Execute query to get table data
+                    query = f"SELECT * FROM {table_name} LIMIT 100"
+                    result = db_int.db_analyzer.execute_safe_query(query)
+                    
+                    if result.get("success"):
+                        rows = result.get("data", [])  # Changed from "results" to "data"
+                        columns = result.get("columns", [])
+                        
+                        if rows:
+                            # Convert to dataframe format
+                            import pandas as pd
+                            # Since rows is already a list of dictionaries, we can pass it directly
+                            df = pd.DataFrame(rows)
+                            info = f"📊 Showing {len(rows)} rows from **{table_name}** (limited to first 100)"
+                            return df, info
+                        else:
+                            return None, f"📭 Table **{table_name}** is empty"
+                    else:
+                        return None, f"❌ Error querying table: {result.get('error', 'Unknown error')}"
+                else:
+                    return None, "❌ Database interface not available"
+                    
+            except Exception as e:
+                return None, f"❌ Error displaying table: {str(e)}"
         
-        # Database tab events
-        nl_query_btn.click(
-            fn=database_natural_query,
-            inputs=[nl_query_input],
-            outputs=[nl_results, sql_generated]
+        # Load tables on startup
+        app.load(
+            fn=get_database_tables,
+            outputs=[table_dropdown, db_status]
         )
         
-        sql_btn.click(
-            fn=database_direct_sql,
-            inputs=[sql_input],
-            outputs=[sql_results, sql_generated]
+        # Refresh tables button
+        refresh_tables_btn.click(
+            fn=get_database_tables,
+            outputs=[table_dropdown, db_status]
         )
         
-        analyze_btn.click(fn=get_database_analysis, outputs=analysis_display)
-        refresh_analysis_btn.click(fn=get_database_analysis, outputs=analysis_display)
-        
-        examples_btn.click(fn=get_crud_examples, outputs=examples_display)
-        connection_btn.click(fn=get_database_connection_info, outputs=connection_display)
-        
-        hybrid_btn.click(
-            fn=hybrid_document_database_query,
-            inputs=[hybrid_query_input, use_docs_check, use_db_check],
-            outputs=hybrid_results
+        # Display table when selected
+        table_dropdown.change(
+            fn=display_table_data,
+            inputs=[table_dropdown],
+            outputs=[table_display, table_info]
         )
         
-        agent_btn.click(
-            fn=smart_agent_query,
-            inputs=[agent_query_input],
-            outputs=[agent_results, agent_log]
-        )
+        # OLD DATABASE INTERFACE - COMMENTED OUT
+        # with gr.Tab("🔍 Query Interface"):
+        #     with gr.Row():
+        #         with gr.Column(scale=2):
+        #             gr.Markdown("#### 💬 Natural Language Query")
+        #             nl_query_input = gr.Textbox(
+        #                 label="Ask about your database in plain English",
+        #                 placeholder="e.g., 'Show me all users created last month' or 'What are the top 10 products by sales?'",
+        #                 lines=3
+        #             )
+        #             
+        #             with gr.Row():
+        #                 nl_query_btn = gr.Button("🔍 Execute Query", variant="primary")
+        #                 clear_nl_btn = gr.Button("🗑️ Clear", variant="secondary")
+        #             
+        #             nl_results = gr.Textbox(
+        #                 label="📊 Query Results",
+        #                 lines=10,
+        #                 interactive=False
+        #             )
+        #         
+        #         with gr.Column(scale=2):
+        #             gr.Markdown("#### 💻 Direct SQL Query")
+        #             sql_input = gr.Textbox(
+        #                 label="Enter SQL query directly",
+        #                 placeholder="SELECT * FROM table_name LIMIT 10;",
+        #                 lines=4
+        #             )
+        #             
+        #             with gr.Row():
+        #                 sql_btn = gr.Button("▶️ Execute SQL", variant="primary")
+        #                 clear_sql_btn = gr.Button("🗑️ Clear", variant="secondary")
+        #             
+        #             sql_results = gr.Textbox(
+        #                 label="📊 SQL Results", 
+        #                 lines=10,
+        #                 interactive=False
+        #             )
+        #     
+        #     with gr.Row():
+        #         sql_generated = gr.Textbox(
+        #             label="🔧 Generated SQL Query",
+        #             lines=3,
+        #             interactive=False,
+        #             placeholder="Generated SQL will appear here..."
+        #         )
+        # 
+        # # ... rest of old interface commented out ...
+    
+    # Dashboard Tab (Financial Analytics Dashboard)
+    with gr.Tab("📊 Dashboard"):
+        gr.Markdown("# 📊 **Financial Contract Analytics Dashboard**")
+        gr.Markdown("*Real-time contract compliance monitoring with AI-powered discrepancy detection*")
         
-        clear_nl_btn.click(lambda: ("", "", ""), outputs=[nl_query_input, nl_results, sql_generated])
-        clear_sql_btn.click(lambda: ("", "", ""), outputs=[sql_input, sql_results, sql_generated])
+        # Initialize dashboard component
+        dashboard = ContractDashboard()
+        
+        # Create the 3-section dashboard interface
+        dashboard.create_full_dashboard_interface()
     
     # Contract Compliance Tab (Working Version with Real Data)
     with gr.Tab("📋 Contract Compliance"):
@@ -902,14 +847,6 @@ with gr.Blocks(
             
             # RIGHT SECTION: Discrepancy detection and analysis
             working_compliance.create_right_section_interface()
-    
-    # System Status Tab
-    with gr.Tab("📊 System Status"):
-        status_display = gr.Markdown()
-        refresh_status_btn = gr.Button("🔄 Refresh Status", variant="primary", size="lg")
-        
-        refresh_status_btn.click(fn=get_system_status, outputs=status_display)
-        app.load(fn=get_system_status, outputs=status_display)
     
     # Load initial data
     app.load(

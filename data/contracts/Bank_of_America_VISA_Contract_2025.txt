@@ -1,0 +1,59 @@
+FIRST AMENDMENT TO ADDENDUM TO PARTICIPATION AGREEMENT
+
+Contract ID: BOA-VISA-2025-001
+Effective Date: March 18, 2025
+
+PARTIES:
+Participant: BANK OF AMERICA
+Service Provider: VISA
+
+AGREEMENT OVERVIEW:
+This FIRST AMENDMENT TO ADDENDUM TO PARTICIPATION AGREEMENT ("Addendum") is entered into as of March 18, 2025, by and between BANK OF AMERICA ("Participant") and VISA ("Service Provider").
+
+This Addendum modifies the Participation Agreement dated [Insert Original Agreement Date] ("Agreement") and is incorporated therein by reference. All capitalized terms not defined herein shall have the meanings ascribed to them in the Agreement.
+
+RECITALS:
+WHEREAS, the parties wish to amend certain provisions of the Agreement to reflect updated terms and conditions;
+
+NOW, THEREFORE, in consideration of the mutual covenants and agreements contained herein, the parties agree as follows:
+
+SCOPE OF SERVICES:
+The following services shall be added to the Scope of Services:
+
+• Expanded Network Access: PULSE shall provide access to an expanded network of international ATMs and POS terminals.
+• Enhanced Fraud Protection: Real-time fraud detection and alerting services shall be included as part of the standard service package.
+
+FEES AND CHARGES:
+Effective 18 March 2025, the following fee structure replaces the previous fee schedule:
+
+• Standard transactions shall be discounted by $0.001
+• The fixed fee component shall be discounted by $0.001
+• The US Issuer ATM fee shall be discounted by $0.01
+• Enhanced Fraud Protection: Included in standard service package
+• Processing Fee: $50 per month
+• Network Access Fee: $25 per month
+
+TERM AND TERMINATION:
+The term of the Agreement is hereby extended by 2 additional years, resulting in a new termination date of [Insert New Termination Date].
+
+REPORTING AND COMPLIANCE:
+Participant shall submit quarterly compliance and performance reports to PULSE, beginning [Insert Start Date].
+
+MISCELLANEOUS:
+• Entire Agreement: This Addendum, together with the Agreement, constitutes the entire agreement between the parties with respect to the subject matter hereof.
+• Conflict: In the event of any conflict between this Addendum and the Agreement, the terms of this Addendum shall prevail.
+• Ratification: Except as expressly modified herein, all other terms and conditions of the Agreement shall remain in full force and effect.
+
+IN WITNESS WHEREOF, the parties have executed this Addendum as of the date first written above.
+
+BANK OF AMERICA
+By: _________________
+Name: [Authorized Signatory]
+Title: [Title]
+Date: March 18, 2025
+
+VISA
+By: _________________
+Name: [Authorized Signatory]  
+Title: [Title]
+Date: March 18, 2025
