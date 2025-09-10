@@ -12,6 +12,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from .ai_compliance_checker import AIComplianceChecker
+from .ai_results_formatter import format_ai_results_as_cards, create_summary_dashboard
 
 # Add src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -1000,48 +1001,114 @@ Database connection required for live analysis.
                 # AI-Powered detection tab
                 with gr.Tab("🤖 AI-Powered"):
                     gr.Markdown("""
-                    **AI-Enhanced Compliance Check**
+                    ## **🤖 AI-Enhanced Compliance Check**
                     
-                    This uses:
-                    - RAG to fetch relevant contract terms
-                    - AI to understand complex fee structures
-                    - Intelligent comparison of actual vs expected fees
+                    This advanced detection system uses:
+                    - **RAG Search** to fetch relevant contract terms from documents
+                    - **Database Context** to get exact expected fee structures
+                    - **Gemini AI** to intelligently analyze complex fee scenarios
                     """)
                     
+                    # Spacer
+                    gr.Markdown("")
+                    
                     with gr.Row():
-                        ai_time_range = gr.Slider(
-                            minimum=1,
-                            maximum=60,
-                            value=10,
-                            step=1,
-                            label="Check transactions from last N minutes"
-                        )
-                        
-                        ai_check_btn = gr.Button("🤖 AI Analysis", variant="primary")
+                        with gr.Column(scale=3):
+                            ai_time_range = gr.Slider(
+                                minimum=1,
+                                maximum=60,
+                                value=10,
+                                step=1,
+                                label="⏱️ Check transactions from last N minutes"
+                            )
+                        with gr.Column(scale=1):
+                            ai_check_btn = gr.Button(
+                                "🤖 Run AI Analysis", 
+                                variant="primary",
+                                size="lg"
+                            )
                     
-                    # AI results
-                    ai_results = gr.Dataframe(
-                        label="AI-Detected Discrepancies",
-                        wrap=True
-                    )
+                    # Status indicator
+                    ai_status = gr.Markdown("*Click 'Run AI Analysis' to start checking transactions...*")
                     
-                    # Detailed report generation
-                    with gr.Accordion("📄 Generate Detailed Report", open=False):
-                        transaction_ids_input = gr.Textbox(
-                            label="Transaction IDs (comma-separated)",
-                            placeholder="TXN_001, TXN_002"
-                        )
-                        generate_report_btn = gr.Button("Generate AI Report")
+                    # Tabs for different view modes
+                    with gr.Tabs():
+                        with gr.Tab("📋 Card View"):
+                            # Dashboard summary
+                            ai_dashboard = gr.Markdown(
+                                value=create_summary_dashboard(pd.DataFrame()),
+                                elem_classes="dashboard-summary"
+                            )
+                            
+                            # Formatted cards view
+                            ai_cards = gr.Markdown(
+                                label="Detailed Issues",
+                                elem_classes="ai-cards-view"
+                            )
                         
-                        report_output = gr.Markdown(label="AI Compliance Report")
+                        with gr.Tab("📊 Table View"):
+                            # AI results dataframe
+                            ai_results = gr.Dataframe(
+                                label="AI-Detected Discrepancies",
+                                wrap=True,
+                                max_rows=20,
+                                datatype=["str", "str", "str", "str", "str", "str", "str", "str", "str", "str", "str", "str"],
+                                column_widths=["10%", "10%", "10%", "10%", "15%", "8%", "8%", "8%", "8%", "5%", "8%", "10%"]
+                            )
+                    
+                    # Spacer
+                    gr.Markdown("---")
+                    
+                    # Detailed report generation with better layout
+                    with gr.Accordion("📄 Generate Detailed Compliance Report", open=False):
+                        gr.Markdown("""
+                        ### Generate Professional Compliance Report
+                        Enter transaction IDs to generate a detailed AI-powered analysis report.
+                        """)
+                        
+                        with gr.Row():
+                            with gr.Column(scale=3):
+                                transaction_ids_input = gr.Textbox(
+                                    label="Transaction IDs",
+                                    placeholder="Enter comma-separated IDs: TXN_001, TXN_002, TXN_003",
+                                    lines=2
+                                )
+                            with gr.Column(scale=1):
+                                generate_report_btn = gr.Button(
+                                    "📄 Generate Report",
+                                    variant="secondary",
+                                    size="lg"
+                                )
+                        
+                        # Report output with scrollable area
+                        report_output = gr.Markdown(
+                            label="AI Compliance Report",
+                            elem_classes="report-output"
+                        )
                     
                     # Event handlers for AI
                     def run_ai_check(minutes):
                         if self.ai_checker:
+                            status = f"🔄 Checking transactions from the last {minutes} minutes..."
+                            # Note: In real implementation, you'd yield status first
                             df = self.ai_checker.check_recent_transactions(int(minutes))
-                            return df
+                            
+                            # Create formatted views
+                            dashboard = create_summary_dashboard(df)
+                            cards = format_ai_results_as_cards(df)
+                            
+                            if df.empty:
+                                final_status = f"✅ Analysis complete. No transactions found in the last {minutes} minutes."
+                            elif 'Status' in df.columns and 'All Clear' in str(df.iloc[0]['Status']):
+                                final_status = f"✅ Analysis complete. All transactions are compliant!"
+                            else:
+                                issue_count = len(df)
+                                final_status = f"⚠️ Analysis complete. Found {issue_count} potential issues."
+                            
+                            return df, final_status, dashboard, cards
                         else:
-                            return pd.DataFrame({'Error': ['AI checker not initialized']})
+                            empty_df = pd.DataFrame({'Error': ['AI checker not initialized']})
+                            return empty_df, "❌ AI checker not initialized", create_summary_dashboard(empty_df), "No results available"
                     
                     def generate_ai_report(ids_text):
                         if not ids_text or not self.ai_checker:
@@ -1053,7 +1120,7 @@ Database connection required for live analysis.
                     ai_check_btn.click(
                         fn=run_ai_check,
                         inputs=[ai_time_range],
-                        outputs=[ai_results]
+                        outputs=[ai_results, ai_status, ai_dashboard, ai_cards]
                     )
                     
                     generate_report_btn.click(

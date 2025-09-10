@@ -1,0 +1,130 @@
+/* Custom styles for Contract Compliance System */
+
+/* Make dataframes more readable */
+.gradio-dataframe {
+    font-size: 14px !important;
+}
+
+.gradio-dataframe table {
+    width: 100% !important;
+}
+
+.gradio-dataframe th {
+    background-color: #f0f0f0 !important;
+    font-weight: bold !important;
+    padding: 10px !important;
+    white-space: nowrap !important;
+}
+
+.gradio-dataframe td {
+    padding: 8px !important;
+    border: 1px solid #e0e0e0 !important;
+}
+
+/* Highlight severity levels */
+.gradio-dataframe td:contains("HIGH") {
+    color: #d32f2f !important;
+    font-weight: bold !important;
+}
+
+.gradio-dataframe td:contains("MEDIUM") {
+    color: #f57c00 !important;
+    font-weight: bold !important;
+}
+
+.gradio-dataframe td:contains("LOW") {
+    color: #388e3c !important;
+}
+
+/* Improve button appearance */
+.gr-button-primary {
+    min-height: 45px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+}
+
+.gr-button-secondary {
+    min-height: 40px !important;
+    font-size: 14px !important;
+}
+
+/* Better spacing for sections */
+.gr-box {
+    padding: 20px !important;
+}
+
+/* Report output styling */
+.report-output {
+    max-height: 600px !important;
+    overflow-y: auto !important;
+    padding: 20px !important;
+    background-color: #f9f9f9 !important;
+    border: 1px solid #ddd !important;
+    border-radius: 8px !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+/* Status messages */
+.gr-markdown {
+    line-height: 1.6 !important;
+}
+
+/* Accordion styling */
+.gr-accordion {
+    margin-top: 20px !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+}
+
+/* Slider styling */
+.gr-slider {
+    margin: 15px 0 !important;
+}
+
+/* Column spacing in compliance tab */
+.compliance-column {
+    min-height: 600px !important;
+    padding: 15px !important;
+}
+
+/* Transaction table specific styling */
+#transactions-table table {
+    font-size: 12px !important;
+}
+
+#transactions-table th {
+    position: sticky !important;
+    top: 0 !important;
+    background-color: #2196F3 !important;
+    color: white !important;
+    z-index: 10 !important;
+}
+
+/* Discrepancy detection results */
+.discrepancy-results {
+    background-color: #fff3e0 !important;
+    border-left: 4px solid #ff9800 !important;
+    padding: 15px !important;
+    margin: 10px 0 !important;
+}
+
+/* Make text more readable */
+body {
+    font-size: 14px !important;
+}
+
+h1, h2, h3 {
+    margin-top: 20px !important;
+    margin-bottom: 15px !important;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 1200px) {
+    .gradio-dataframe {
+        font-size: 12px !important;
+    }
+    
+    .gr-button-primary {
+        font-size: 14px !important;
+    }
+}

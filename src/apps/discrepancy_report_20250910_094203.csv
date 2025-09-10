@@ -1,0 +1,4 @@
+Transaction ID,Merchant,Type,Issue Type,Description,Expected,Actual,Variance,Severity,Timestamp
+TXN_20241210_001,DBS BANK,ATM_WITHDRAWAL,Fee Overcharge,Processing fee higher than contracted,$0.005,$0.015,$0.010,HIGH,2025-09-10 09:16:52
+TXN_20241210_002,VISA,CARD_PAYMENT,Missing Fee,Interchange fee not applied,$1.200,$0.000,$1.200,HIGH,2025-09-10 09:16:52
+TXN_20241210_003,MASTERCARD,CARD_PAYMENT,Unexpected Fee,Admin fee not in contract,$0.000,$2.500,$2.500,MEDIUM,2025-09-10 09:16:52
