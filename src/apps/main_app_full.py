@@ -615,7 +615,7 @@ with gr.Blocks(
             height=700,
             type="messages",
             show_label=True,
-            avatar_images=["👤", "🤖"],
+            avatar_images=[None, None]  # Use default Gradio avatars for both user and assistant
         )
         
         with gr.Row():
@@ -817,28 +817,28 @@ with gr.Blocks(
         # Create the 3-section dashboard interface
         dashboard.create_full_dashboard_interface()
     
-    # Contract Compliance Tab (Working Version with Real Data)
-    with gr.Tab("📋 Contract Compliance"):
-        # Initialize with existing components for real functionality
-        vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
-        
-        # Create working compliance monitor with real components
-        working_compliance = WorkingComplianceMonitor(
-            vector_store=vs,
-            rag_processor=rag,
-            db_analyzer=db_int.db_analyzer if db_int else None
-        )
-        
-        # Create full compliance interface with all sections
-        with gr.Row():
-            # LEFT SECTION: Contract query interface
-            working_compliance.create_left_section_interface()
-            
-            # CENTER SECTION: Real transaction display
-            working_compliance.create_center_section_interface()
-            
-            # RIGHT SECTION: Discrepancy detection and analysis
-            working_compliance.create_right_section_interface()
+    # Contract Compliance Tab - REMOVED FOR NOW
+    # with gr.Tab("📋 Contract Compliance"):
+    #     # Initialize with existing components for real functionality
+    #     vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
+    #     
+    #     # Create working compliance monitor with real components
+    #     working_compliance = WorkingComplianceMonitor(
+    #         vector_store=vs,
+    #         rag_processor=rag,
+    #         db_analyzer=db_int.db_analyzer if db_int else None
+    #     )
+    #     
+    #     # Create full compliance interface with all sections
+    #     with gr.Row():
+    #         # LEFT SECTION: Contract query interface
+    #         working_compliance.create_left_section_interface()
+    #         
+    #         # CENTER SECTION: Real transaction display
+    #         working_compliance.create_center_section_interface()
+    #         
+    #         # RIGHT SECTION: Discrepancy detection and analysis
+    #         working_compliance.create_right_section_interface()
     
     # Load initial data
     app.load(
