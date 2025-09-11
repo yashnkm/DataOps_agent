@@ -34,10 +34,13 @@ class FAISSVectorStore:
             test_result = self.embeddings.embed_query("test")
             if len(test_result) > 0:
                 print("✅ Local embeddings initialized successfully")
+                print(f"Embedding dimension: {len(test_result)}")
                 return
                 
         except Exception as e:
-            print(f"Local embeddings initialization failed: {e}")
+            print(f"❌ Local embeddings initialization failed: {e}")
+            import traceback
+            traceback.print_exc()
             raise RuntimeError(f"Failed to initialize local embeddings: {e}")
     
     
@@ -131,6 +134,7 @@ class FAISSVectorStore:
             print(f"🔍 Searching for: '{query}' in {self.vector_store.index.ntotal} documents")
             
             # Perform similarity search
+            print(f"Attempting similarity search with query: '{query}', k={k}")
             docs_with_scores = self.vector_store.similarity_search_with_score(query, k=k)
             
             print(f"📊 Found {len(docs_with_scores)} results")
@@ -151,6 +155,14 @@ class FAISSVectorStore:
             
         except Exception as e:
             print(f"❌ Error searching documents: {e}")
+            print(f"Error type: {type(e).__name__}")
+            print(f"Vector store status: {self.vector_store is not None}")
+            print(f"Embeddings status: {self.embeddings is not None}")
+            if self.vector_store:
+                print(f"Vector store type: {type(self.vector_store)}")
+                print(f"Vector store index total: {getattr(self.vector_store, 'index', {}).ntotal if hasattr(getattr(self.vector_store, 'index', {}), 'ntotal') else 'unknown'}")
+            import traceback
+            traceback.print_exc()
             return []
     
     def get_store_info(self) -> Dict[str, Any]:
