@@ -7,7 +7,7 @@ import pypdf
 import pandas as pd
 from docx import Document
 import pdfplumber
-from unstructured.partition.auto import partition
+# Removed unstructured - too heavy for POC deployment
 
 
 class DocumentProcessor:
@@ -149,9 +149,12 @@ class DocumentProcessor:
             return file.read()
     
     def _process_with_unstructured(self, file_path: str) -> str:
-        """Fallback processing using unstructured library"""
-        elements = partition(filename=file_path)
-        return '\n\n'.join([str(element) for element in elements])
+        """Fallback for unsupported file types"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        except:
+            return "Unsupported file format. Supported: PDF, DOCX, XLSX, CSV, TXT"
     
     def _chunk_text(self, text: str, filename: str, chunk_size: int = 1500, overlap: int = 200) -> List[Dict[str, Any]]:
         """Split text into overlapping chunks for better retrieval"""
