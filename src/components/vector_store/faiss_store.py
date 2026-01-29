@@ -2,7 +2,7 @@ import os
 import pickle
 from typing import List, Dict, Any, Optional
 from langchain_community.vectorstores import FAISS
-from langchain.schema import Document
+from langchain_core.documents import Document
 
 
 class FAISSVectorStore:
@@ -26,7 +26,7 @@ class FAISSVectorStore:
         # Try sentence-transformers first (best accuracy)
         try:
             from sentence_transformers import SentenceTransformer
-            from langchain.embeddings.base import Embeddings
+            from langchain_core.embeddings import Embeddings
 
             print("🔄 Initializing sentence-transformers (semantic embeddings)...")
 
@@ -85,7 +85,7 @@ class FAISSVectorStore:
     
     def _create_local_embedding_function(self):
         """Create local embedding function compatible with FAISS"""
-        from langchain.embeddings.base import Embeddings
+        from langchain_core.embeddings import Embeddings
         
         class LocalEmbeddingWrapper(Embeddings):
             def __init__(self, local_embedder):
