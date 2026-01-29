@@ -15,7 +15,6 @@ langchain-core
 
 # Embeddings & Reranking
 sentence-transformers
-torch
 transformers
 
 # Vector Store & Search
