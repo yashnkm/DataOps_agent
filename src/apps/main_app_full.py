@@ -188,8 +188,8 @@ def upload_documents_with_memory(files: List[Any]) -> Tuple[str, str, str]:
     except Exception as e:
         return f"❌ Error processing documents: {str(e)}", get_document_list(), get_session_info()
 
-def rag_chat_with_memory(message: str, history: List[Tuple[str, str]]) -> Tuple[str, List[Tuple[str, str]], str]:
-    """RAG chat with conversation memory - uses tuple format for Gradio compatibility"""
+def rag_chat_with_memory(message: str, history: List[Dict]) -> Tuple[str, List[Dict], str]:
+    """RAG chat with conversation memory - uses messages format for Gradio 6.0"""
 
     try:
         if not message.strip():
@@ -203,7 +203,8 @@ def rag_chat_with_memory(message: str, history: List[Tuple[str, str]]) -> Tuple[
         session_docs = sess_mgr.get_session_documents(session_id)
         if not session_docs:
             response = "📭 No documents loaded in this session. Please upload documents in the **Documents** tab first."
-            history.append((message, response))
+            history.append({"role": "user", "content": message})
+            history.append({"role": "assistant", "content": response})
 
             # Save to memory
             sess_mgr.add_message(session_id, 'user', message)
@@ -227,7 +228,8 @@ def rag_chat_with_memory(message: str, history: List[Tuple[str, str]]) -> Tuple[
         if conversation_context and len(history) > 0:
             response += f"\n\n*Response considers conversation context from {len(sess_mgr.get_conversation_history(session_id))} previous messages*"
 
-        history.append((message, response))
+        history.append({"role": "user", "content": message})
+        history.append({"role": "assistant", "content": response})
 
         # Save to memory
         sess_mgr.add_message(session_id, 'user', message, {
@@ -241,7 +243,8 @@ def rag_chat_with_memory(message: str, history: List[Tuple[str, str]]) -> Tuple[
 
     except Exception as e:
         error_msg = f"❌ Error processing query: {str(e)}"
-        history.append((message, error_msg))
+        history.append({"role": "user", "content": message})
+        history.append({"role": "assistant", "content": error_msg})
 
         # Save error to memory (if session manager is available)
         try:
@@ -315,7 +318,7 @@ def get_session_info() -> str:
     except Exception as e:
         return f"❌ Error getting session info: {str(e)}"
 
-def new_session() -> Tuple[List[Tuple[str, str]], str, str, str]:
+def new_session() -> Tuple[List[Dict], str, str, str]:
     """Start a new session"""
     global current_session_id
 
