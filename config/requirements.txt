@@ -2,8 +2,10 @@
 gradio
 
 # AI/LLM Libraries
-google-generativeai
-google-api-core
+# NOTE: google-generativeai is deprecated but still works.
+# Migration to google-genai requires API code changes.
+google-generativeai>=0.8.0
+google-api-core>=2.20.0
 
 # LangChain Ecosystem
 langchain

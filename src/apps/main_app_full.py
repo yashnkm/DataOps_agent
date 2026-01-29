@@ -6,6 +6,31 @@ from typing import List, Dict, Any, Tuple
 import google.generativeai as genai
 import sqlite3
 
+# ============ MONKEY-PATCH FIX FOR GRADIO_CLIENT BUG ============
+# Fix for TypeError: argument of type 'bool' is not iterable
+# This bug occurs in gradio_client 1.0+ when processing JSON schemas
+def _patch_gradio_client():
+    try:
+        import gradio_client.utils as client_utils
+
+        original_json_schema_to_python_type = client_utils._json_schema_to_python_type
+
+        def patched_json_schema_to_python_type(schema, defs=None):
+            # Handle case where schema is a boolean (True/False) instead of dict
+            if isinstance(schema, bool):
+                return "Any"
+            if not isinstance(schema, dict):
+                return "Any"
+            return original_json_schema_to_python_type(schema, defs)
+
+        client_utils._json_schema_to_python_type = patched_json_schema_to_python_type
+        print("✅ Applied Gradio client patch for Python 3.9 compatibility")
+    except Exception as e:
+        print(f"⚠️ Could not patch gradio_client: {e}")
+
+_patch_gradio_client()
+# ============ END MONKEY-PATCH ============
+
 # Add src to path for components
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -165,47 +190,47 @@ def upload_documents_with_memory(files: List[Any]) -> Tuple[str, str, str]:
 
 def rag_chat_with_memory(message: str, history: List[Dict]) -> Tuple[str, List[Dict], str]:
     """RAG chat with conversation memory"""
-    
+
     try:
         if not message.strip():
             return "", history, get_session_info()
-        
+
         # Initialize components and session
         vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
         session_id = get_current_session()
-        
+
         # Check if any documents are loaded in this session
         session_docs = sess_mgr.get_session_documents(session_id)
         if not session_docs:
             response = "📭 No documents loaded in this session. Please upload documents in the **Documents** tab first."
             history.append({"role": "user", "content": message})
             history.append({"role": "assistant", "content": response})
-            
+
             # Save to memory
             sess_mgr.add_message(session_id, 'user', message)
             sess_mgr.add_message(session_id, 'assistant', response)
-            
+
             return "", history, get_session_info()
-        
+
         # Get conversation context for better responses
         conversation_context = sess_mgr.get_context_for_query(session_id)
-        
+
         # Enhanced query with context
         enhanced_query = message
         if conversation_context:
             enhanced_query = f"Conversation Context:\n{conversation_context}\n\nCurrent Question: {message}"
-        
+
         # Process query through RAG pipeline
         result = rag.process_query(enhanced_query, use_reranking=False, final_results=3)
-        
+
         # Add conversation context to response if relevant
         response = result['response']
         if conversation_context and len(history) > 0:
             response += f"\n\n*Response considers conversation context from {len(sess_mgr.get_conversation_history(session_id))} previous messages*"
-        
+
         history.append({"role": "user", "content": message})
         history.append({"role": "assistant", "content": response})
-        
+
         # Save to memory
         sess_mgr.add_message(session_id, 'user', message, {
             'query_mode': 'document',
@@ -215,12 +240,12 @@ def rag_chat_with_memory(message: str, history: List[Dict]) -> Tuple[str, List[D
             'search_results_count': result.get('search_results_count', 0),
             'context_chunks_used': result.get('final_context_count', 0)
         })
-        
+
     except Exception as e:
         error_msg = f"❌ Error processing query: {str(e)}"
         history.append({"role": "user", "content": message})
         history.append({"role": "assistant", "content": error_msg})
-        
+
         # Save error to memory (if session manager is available)
         try:
             vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
@@ -229,7 +254,7 @@ def rag_chat_with_memory(message: str, history: List[Dict]) -> Tuple[str, List[D
             sess_mgr.add_message(session_id, 'assistant', error_msg, {'error': True})
         except:
             pass  # If session manager fails, just skip memory saving
-    
+
     return "", history, get_session_info()
 
 def get_document_list() -> str:
@@ -296,16 +321,16 @@ def get_session_info() -> str:
 def new_session() -> Tuple[List[Dict], str, str, str]:
     """Start a new session"""
     global current_session_id
-    
+
     try:
         vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
         current_session_id = sess_mgr.create_session({
             'restart_reason': 'user_requested',
             'previous_session': current_session_id
         })
-        
+
         return [], "🆕 New session started!", get_document_list(), get_session_info()
-        
+
     except Exception as e:
         return [], f"❌ Error starting new session: {str(e)}", get_document_list(), get_session_info()
 
@@ -611,11 +636,11 @@ with gr.Blocks(
         
         # Full-width chat interface
         chatbot = gr.Chatbot(
-            label="Document Chat Assistant", 
+            label="Document Chat Assistant",
             height=700,
             type="messages",
             show_label=True,
-            avatar_images=[None, None]  # Use default Gradio avatars for both user and assistant
+            avatar_images=[None, None]
         )
         
         with gr.Row():
@@ -647,165 +672,7 @@ with gr.Blocks(
         
         clear_chat_btn.click(lambda: [], outputs=[chatbot])
         new_session_btn.click(fn=lambda: ([], ""), outputs=[chatbot, upload_status])
-    
-    # Database Interface Tab - Simplified Table Viewer
-    with gr.Tab("🗄️ Database"):
-        gr.Markdown("### 🗄️ PostgreSQL Database Table Viewer")
-        
-        # Connection status
-        db_status = gr.Markdown("")
-        
-        with gr.Row():
-            # Dropdown for table selection
-            table_dropdown = gr.Dropdown(
-                label="Select a Table",
-                choices=[],
-                interactive=True,
-                scale=2
-            )
-            
-            refresh_tables_btn = gr.Button("🔄 Refresh Tables", variant="secondary", scale=1)
-        
-        # Display selected table data
-        table_display = gr.Dataframe(
-            label="Table Data",
-            interactive=False,
-            wrap=True
-        )
-        
-        # Row count info
-        table_info = gr.Markdown("")
-        
-        # Events for new database interface
-        def get_database_tables():
-            """Get list of all tables in the database"""
-            try:
-                vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
-                
-                if db_int and db_int.db_analyzer:
-                    # Try to connect if not connected
-                    if db_int.db_analyzer.connection_status != "connected":
-                        db_int.db_analyzer.connect_to_database()
-                    
-                    if db_int.db_analyzer.connection_status == "connected":
-                        # Get table names
-                        overview = db_int.get_database_overview()
-                        if overview.get("success"):
-                            tables = list(overview.get("tables", {}).keys())
-                            status = f"✅ **Database Connected** - {len(tables)} tables found"
-                            return gr.update(choices=tables, value=tables[0] if tables else None), status
-                        else:
-                            return gr.update(choices=[]), "❌ **Database Error:** Could not fetch tables"
-                    else:
-                        return gr.update(choices=[]), "❌ **Database Not Connected** - Check your PostgreSQL connection"
-                else:
-                    return gr.update(choices=[]), "❌ **Database Interface Not Initialized**"
-                    
-            except Exception as e:
-                return gr.update(choices=[]), f"❌ **Error:** {str(e)}"
-        
-        def display_table_data(table_name):
-            """Display data from selected table"""
-            if not table_name:
-                return None, ""
-            
-            try:
-                vs, rag, doc_proc, sess_mgr, db_int, hybrid_agt = initialize_components()
-                
-                if db_int and db_int.db_analyzer:
-                    # Execute query to get table data
-                    query = f"SELECT * FROM {table_name} LIMIT 100"
-                    result = db_int.db_analyzer.execute_safe_query(query)
-                    
-                    if result.get("success"):
-                        rows = result.get("data", [])  # Changed from "results" to "data"
-                        columns = result.get("columns", [])
-                        
-                        if rows:
-                            # Convert to dataframe format
-                            import pandas as pd
-                            # Since rows is already a list of dictionaries, we can pass it directly
-                            df = pd.DataFrame(rows)
-                            info = f"📊 Showing {len(rows)} rows from **{table_name}** (limited to first 100)"
-                            return df, info
-                        else:
-                            return None, f"📭 Table **{table_name}** is empty"
-                    else:
-                        return None, f"❌ Error querying table: {result.get('error', 'Unknown error')}"
-                else:
-                    return None, "❌ Database interface not available"
-                    
-            except Exception as e:
-                return None, f"❌ Error displaying table: {str(e)}"
-        
-        # Load tables on startup
-        app.load(
-            fn=get_database_tables,
-            outputs=[table_dropdown, db_status]
-        )
-        
-        # Refresh tables button
-        refresh_tables_btn.click(
-            fn=get_database_tables,
-            outputs=[table_dropdown, db_status]
-        )
-        
-        # Display table when selected
-        table_dropdown.change(
-            fn=display_table_data,
-            inputs=[table_dropdown],
-            outputs=[table_display, table_info]
-        )
-        
-        # OLD DATABASE INTERFACE - COMMENTED OUT
-        # with gr.Tab("🔍 Query Interface"):
-        #     with gr.Row():
-        #         with gr.Column(scale=2):
-        #             gr.Markdown("#### 💬 Natural Language Query")
-        #             nl_query_input = gr.Textbox(
-        #                 label="Ask about your database in plain English",
-        #                 placeholder="e.g., 'Show me all users created last month' or 'What are the top 10 products by sales?'",
-        #                 lines=3
-        #             )
-        #             
-        #             with gr.Row():
-        #                 nl_query_btn = gr.Button("🔍 Execute Query", variant="primary")
-        #                 clear_nl_btn = gr.Button("🗑️ Clear", variant="secondary")
-        #             
-        #             nl_results = gr.Textbox(
-        #                 label="📊 Query Results",
-        #                 lines=10,
-        #                 interactive=False
-        #             )
-        #         
-        #         with gr.Column(scale=2):
-        #             gr.Markdown("#### 💻 Direct SQL Query")
-        #             sql_input = gr.Textbox(
-        #                 label="Enter SQL query directly",
-        #                 placeholder="SELECT * FROM table_name LIMIT 10;",
-        #                 lines=4
-        #             )
-        #             
-        #             with gr.Row():
-        #                 sql_btn = gr.Button("▶️ Execute SQL", variant="primary")
-        #                 clear_sql_btn = gr.Button("🗑️ Clear", variant="secondary")
-        #             
-        #             sql_results = gr.Textbox(
-        #                 label="📊 SQL Results", 
-        #                 lines=10,
-        #                 interactive=False
-        #             )
-        #     
-        #     with gr.Row():
-        #         sql_generated = gr.Textbox(
-        #             label="🔧 Generated SQL Query",
-        #             lines=3,
-        #             interactive=False,
-        #             placeholder="Generated SQL will appear here..."
-        #         )
-        # 
-        # # ... rest of old interface commented out ...
-    
+
     # Dashboard Tab (Financial Analytics Dashboard)
     with gr.Tab("📊 Dashboard"):
         gr.Markdown("# 📊 **Financial Contract Analytics Dashboard**")

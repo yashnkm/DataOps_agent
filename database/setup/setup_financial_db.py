@@ -105,20 +105,22 @@ def setup_schema_and_data(db_name):
         conn.commit()
         
         print("✅ Schema and data setup completed successfully!")
-        
-        # Get table counts for verification
+
+        # Get table counts for verification (using information_schema for compatibility)
         cursor.execute("""
-            SELECT schemaname, tablename, n_tup_ins as row_count
-            FROM pg_stat_user_tables 
-            WHERE schemaname = 'public'
-            ORDER BY tablename
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+            ORDER BY table_name
         """)
-        
+
         tables = cursor.fetchall()
-        print("\n📋 Created tables with data:")
-        for schema, table, count in tables:
-            if count and count > 0:
-                print(f"  📄 {table}: {count} records")
+        print("\n📋 Created tables:")
+        for (table_name,) in tables:
+            # Get row count for each table
+            cursor.execute(f'SELECT COUNT(*) FROM "{table_name}"')
+            count = cursor.fetchone()[0]
+            print(f"  📄 {table_name}: {count} records")
         
         cursor.close()
         conn.close()

@@ -2,7 +2,6 @@ import os
 import pickle
 from typing import List, Dict, Any, Optional
 from langchain_community.vectorstores import FAISS
-# Removed unused imports for HuggingFace and Google embeddings
 from langchain.schema import Document
 
 
@@ -13,35 +12,73 @@ class FAISSVectorStore:
         self.persist_directory = persist_directory
         self.vector_store = None
         self.embeddings = None
-        
+        self.embedding_type = None
+
         # Initialize embeddings
         self._initialize_embeddings()
-        
+
         # Load existing vector store if available
         self._load_existing_store()
-    
+
     def _initialize_embeddings(self):
-        """Initialize local embedding model"""
+        """Initialize embedding model - tries sentence-transformers first, falls back to TF-IDF"""
+
+        # Try sentence-transformers first (best accuracy)
+        try:
+            from sentence_transformers import SentenceTransformer
+            from langchain.embeddings.base import Embeddings
+
+            print("🔄 Initializing sentence-transformers (semantic embeddings)...")
+
+            # Use a lightweight but accurate model
+            self.st_model = SentenceTransformer('all-MiniLM-L6-v2')
+
+            # Create LangChain-compatible wrapper
+            class SentenceTransformerEmbeddings(Embeddings):
+                def __init__(self, model):
+                    self.model = model
+
+                def embed_documents(self, texts: List[str]) -> List[List[float]]:
+                    embeddings = self.model.encode(texts, show_progress_bar=False)
+                    return embeddings.tolist()
+
+                def embed_query(self, text: str) -> List[float]:
+                    embedding = self.model.encode([text], show_progress_bar=False)[0]
+                    return embedding.tolist()
+
+            self.embeddings = SentenceTransformerEmbeddings(self.st_model)
+            self.embedding_type = "sentence-transformers"
+
+            # Test
+            test_result = self.embeddings.embed_query("test")
+            print(f"✅ Sentence-transformers initialized (dim={len(test_result)})")
+            print("   Model: all-MiniLM-L6-v2 (semantic search enabled)")
+            return
+
+        except Exception as e:
+            print(f"⚠️ Sentence-transformers failed: {e}")
+            print("   Falling back to TF-IDF...")
+
+        # Fallback to TF-IDF
         try:
             from .local_embeddings import RobustLocalEmbeddings
-            
-            print("🔄 Initializing local embeddings...")
+
+            print("🔄 Initializing TF-IDF embeddings (fallback)...")
             cache_dir = os.path.join(self.persist_directory, "local_embeddings")
             self.local_embedder = RobustLocalEmbeddings(cache_dir)
             self.embeddings = self._create_local_embedding_function()
-            
-            # Test encoding
+            self.embedding_type = "tfidf"
+
             test_result = self.embeddings.embed_query("test")
             if len(test_result) > 0:
-                print("✅ Local embeddings initialized successfully")
-                print(f"Embedding dimension: {len(test_result)}")
+                print(f"✅ TF-IDF embeddings initialized (dim={len(test_result)})")
                 return
-                
+
         except Exception as e:
-            print(f"❌ Local embeddings initialization failed: {e}")
+            print(f"❌ All embeddings failed: {e}")
             import traceback
             traceback.print_exc()
-            raise RuntimeError(f"Failed to initialize local embeddings: {e}")
+            raise RuntimeError(f"Failed to initialize embeddings: {e}")
     
     
     
@@ -168,13 +205,13 @@ class FAISSVectorStore:
     def get_store_info(self) -> Dict[str, Any]:
         """Get information about the vector store"""
         # Determine embedding model info
-        embedding_info = 'Unknown'
-        if hasattr(self, 'local_embedder') and self.local_embedder:
-            local_info = self.local_embedder.get_embedding_info()
-            embedding_info = f"Local ({local_info['method']})"
+        if self.embedding_type == "sentence-transformers":
+            embedding_info = "sentence-transformers (all-MiniLM-L6-v2) - Semantic Search"
+        elif self.embedding_type == "tfidf":
+            embedding_info = "TF-IDF (keyword matching)"
         else:
-            embedding_info = 'Local Embeddings'
-        
+            embedding_info = "Unknown"
+
         return {
             'total_documents': self.vector_store.index.ntotal if self.vector_store else 0,
             'embedding_model': embedding_info,
