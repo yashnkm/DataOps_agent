@@ -578,8 +578,8 @@ with gr.Blocks(
     gr.Markdown("# Fee Billing Excellence Analytic System")
     gr.Markdown("**Intelligent Contract Processing and Analysis Platform**")
     
-    # Contract Management Tab
-    with gr.Tab("📁 Contract"):
+    # Document Management Tab
+    with gr.Tab("📁 Documents"):
         gr.Markdown("### 📂 Document Management")
         
         with gr.Row():
@@ -634,18 +634,29 @@ with gr.Blocks(
             outputs=[upload_status, document_list, session_info]
         )
     
+    # Dashboard Tab (Financial Analytics Dashboard)
+    with gr.Tab("📊 Dashboard"):
+        gr.Markdown("# 📊 **Financial Contract Analytics Dashboard**")
+        gr.Markdown("*Real-time contract compliance monitoring with AI-powered discrepancy detection*")
+
+        # Initialize dashboard component
+        dashboard = ContractDashboard()
+
+        # Create the 3-section dashboard interface
+        dashboard.create_full_dashboard_interface()
+
     # Chat Interface with Memory
     with gr.Tab("💬 Smart Chat"):
         gr.Markdown("### 💬 Document Chat Assistant")
         gr.Markdown("*Ask questions about your uploaded documents*")
-        
+
         # Full-width chat interface
         chatbot = gr.Chatbot(
             label="Document Chat Assistant",
             height=700,
             show_label=True
         )
-        
+
         with gr.Row():
             msg = gr.Textbox(
                 label="Ask about your documents...",
@@ -655,37 +666,26 @@ with gr.Blocks(
                 autofocus=True
             )
             send_btn = gr.Button("📤 Send", scale=1, variant="primary", size="lg")
-        
+
         with gr.Row():
             clear_chat_btn = gr.Button("🗑️ Clear Chat", variant="secondary")
             new_session_btn = gr.Button("🆕 New Session", variant="secondary")
-        
+
         # Chat events - simplified without session display
         send_btn.click(
             fn=lambda msg_input, history: rag_chat_with_memory(msg_input, history)[0:2],  # Only return msg and history
             inputs=[msg, chatbot],
             outputs=[msg, chatbot]
         )
-        
+
         msg.submit(
             fn=lambda msg_input, history: rag_chat_with_memory(msg_input, history)[0:2],  # Only return msg and history
             inputs=[msg, chatbot],
             outputs=[msg, chatbot]
         )
-        
+
         clear_chat_btn.click(lambda: [], outputs=[chatbot])
         new_session_btn.click(fn=lambda: ([], ""), outputs=[chatbot, upload_status])
-
-    # Dashboard Tab (Financial Analytics Dashboard)
-    with gr.Tab("📊 Dashboard"):
-        gr.Markdown("# 📊 **Financial Contract Analytics Dashboard**")
-        gr.Markdown("*Real-time contract compliance monitoring with AI-powered discrepancy detection*")
-        
-        # Initialize dashboard component
-        dashboard = ContractDashboard()
-        
-        # Create the 3-section dashboard interface
-        dashboard.create_full_dashboard_interface()
     
     # Contract Compliance Tab - REMOVED FOR NOW
     # with gr.Tab("📋 Contract Compliance"):
