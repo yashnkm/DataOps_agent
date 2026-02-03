@@ -532,7 +532,7 @@ def smart_agent_query(query: str) -> Tuple[str, str]:
 
 # Main Gradio Interface with Memory
 with gr.Blocks(
-    title="Document Chat System", 
+    title="FBE Analytic System", 
     theme=gr.themes.Default(),
     css="""
     .gradio-container {max-width: 1400px !important}
