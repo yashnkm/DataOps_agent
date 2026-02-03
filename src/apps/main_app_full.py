@@ -221,7 +221,7 @@ def rag_chat_with_memory(message: str, history: List[Dict]) -> Tuple[str, List[D
             enhanced_query = f"Conversation Context:\n{conversation_context}\n\nCurrent Question: {message}"
 
         # Process query through RAG pipeline
-        result = rag.process_query(enhanced_query, use_reranking=False, final_results=3)
+        result = rag.process_query(enhanced_query, use_reranking=False, final_results=5)
 
         # Add conversation context to response if relevant
         response = result['response']
@@ -469,7 +469,7 @@ def hybrid_document_database_query(query: str, use_documents: bool, use_database
                     enhanced_query = f"Conversation Context:\n{conversation_context}\n\nCurrent Question: {query}"
                 
                 # Process through RAG
-                rag_result = rag.process_query(enhanced_query, use_reranking=False, final_results=3)
+                rag_result = rag.process_query(enhanced_query, use_reranking=False, final_results=5)
                 results.append(f"## 📄 Document Results\n{rag_result['response']}")
             else:
                 results.append("## 📄 Document Results\n📭 No documents loaded in current session")
