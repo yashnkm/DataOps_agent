@@ -202,7 +202,7 @@ def rag_chat_with_memory(message: str, history: List[Dict]) -> Tuple[str, List[D
         # Check if any documents are loaded in this session
         session_docs = sess_mgr.get_session_documents(session_id)
         if not session_docs:
-            response = "📭 No documents loaded in this session. Please upload documents in the **Documents** tab first."
+            response = "📭 No documents loaded in this session. Please upload documents in the **Contract** tab first."
             history.append({"role": "user", "content": message})
             history.append({"role": "assistant", "content": response})
 
@@ -566,15 +566,20 @@ with gr.Blocks(
         background: linear-gradient(45deg, #ff6b35, #ff8c42) !important;
         color: white !important;
     }
+
+    /* Hide Gradio footer branding */
+    footer {
+        display: none !important;
+    }
     """
 ) as app:
     
     # Header
-    gr.Markdown("# 📋 Document Analytics System")
-    gr.Markdown("**Intelligent Document Processing and Analysis Platform**")
+    gr.Markdown("# Fee Billing Excellence Analytic System")
+    gr.Markdown("**Intelligent Contract Processing and Analysis Platform**")
     
-    # Documents Management Tab
-    with gr.Tab("📁 Documents"):
+    # Contract Management Tab
+    with gr.Tab("📁 Contract"):
         gr.Markdown("### 📂 Document Management")
         
         with gr.Row():
@@ -712,7 +717,7 @@ with gr.Blocks(
     )
 
 if __name__ == "__main__":
-    print("📋 Starting Document Analytics System...")
+    print("📋 Starting Fee Billing Excellence Analytic System...")
     print("💾 Document processing and analysis enabled")
     print("🌐 Opening browser interface...")
     
@@ -720,5 +725,6 @@ if __name__ == "__main__":
         server_name="0.0.0.0",
         server_port=7860,
         share=False,
-        show_error=True
+        show_error=True,
+        show_api=False
     )
