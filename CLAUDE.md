@@ -1,47 +1,46 @@
-# RAG-Powered Database Query System with Gradio
+# Fee Billing Excellence (FBE) Analytic System
 
 ## Project Overview
-Building an intelligent document and database query system using Gradio as the complete frontend and backend framework. The system enables natural language interaction with both document repositories and PostgreSQL databases.
+Gradio web app for natural-language analysis over uploaded contracts and a PostgreSQL financial database. Three core surfaces:
+- **Documents**: upload + chunk + embed contract PDFs
+- **Dashboard**: real-time contract compliance and discrepancy detection
+- **Smart Chat**: RAG over uploaded documents
+- **Analysis** (LangGraph agent): cross-source reasoning over Postgres (via MCP) and uploaded documents
 
 ## Architecture
-- **Frontend & Backend**: Gradio (single application)
-- **AI/LLM**: Google Gemini 2.5 Flash
-- **Vector Store**: ChromaDB with embeddings
-- **Database**: PostgreSQL
-- **Document Processing**: Multiple format support (PDF, Word, Excel, etc.)
+- **Frontend/Backend**: Gradio (single application, `src/apps/main_app_full.py`)
+- **LLM**: Google Gemini, default `gemini-3.1-flash-lite-preview` (configurable via `GEMINI_MODEL`)
+- **Agent framework**: LangChain 1.x `create_agent()` + LangGraph (with `MemorySaver` checkpointer)
+- **Tools used by the agent**:
+  - Postgres MCP server (`@modelcontextprotocol/server-postgres`, launched via npx subprocess)
+  - Local `search_documents` tool wrapping the existing RAG pipeline
+- **Vector Store**: FAISS via `langchain_community.vectorstores.FAISS`, local sentence-transformers embeddings
+- **Database**: PostgreSQL (psycopg2 + SQLAlchemy)
+- **Document Processing**: PDF / Word / Excel / TXT via pypdf, python-docx, openpyxl, etc.
+- **Memory**: SQLite session manager (`data/storage/sessions.db`) + LangGraph in-memory checkpointer
 
-## Core Functions to Implement
-
-### 1. Document Processing Functions
-- `upload_and_process_documents()` - Handle file uploads and extract text
-- `create_embeddings()` - Generate vector embeddings for document chunks
-- `store_in_chromadb()` - Store vectors in ChromaDB collection
-
-### 2. Database Functions  
-- `connect_to_postgres()` - Database connection management
-- `generate_sql_query()` - Convert natural language to SQL using Gemini
-- `execute_database_query()` - Run SQL queries safely
-
-### 3. RAG Functions
-- `semantic_search()` - Query ChromaDB for relevant document chunks
-- `rerank_results()` - Use CrossEncoder for result reranking
-- `generate_response()` - Combine context with Gemini for final answer
-
-### 4. Hybrid Query Functions
-- `detect_query_mode()` - Determine if query needs docs, DB, or both
-- `process_hybrid_query()` - Handle complex queries using multiple data sources
-- `extract_and_insert_data()` - Auto-extract document data into database
-
-## Development Approach
-Building functions incrementally, testing each component before integration into the Gradio interface.
+## Component Map (`src/components/`)
+- `document_processing/` — extract + chunk uploaded files
+- `vector_store/` — FAISS wrapper + local embedding fallback
+- `rag_engine/` — hybrid FAISS + BM25 search, Gemini synthesis
+- `database/` — PostgreSQL connection, schema introspection, NL→SQL
+- `mcp/` — Postgres MCP client (subprocess via stdio + langchain-mcp-adapters)
+- `agent/` — LangGraph agent built with `langchain.agents.create_agent()`
+- `analysis/` — Analysis tab Gradio UI
+- `dashboard/` — financial contract analytics dashboard
+- `memory/` — SQLite session + per-document tracking
 
 ## Commands
-**IMPORTANT: Only user will run commands for starting applications and installing dependencies**
-- Testing: `pytest` (when test files exist)
-- Linting: `ruff check .` (if ruff is used)
-- Type checking: `mypy .` (if mypy is configured)
-- Installation: User handles `pip install -r requirements.txt`
-- Starting: User runs the Gradio application
+**IMPORTANT: Only user runs commands for starting applications and installing dependencies**
+- Install: `pip install -r config/requirements.txt --upgrade`
+- Start app: `python scripts/run_app.py`
+- Tests: `pytest` (when present)
+
+## Development notes
+- Skills installed at `.agents/skills/`: `langchain-fundamentals`, `langgraph-fundamentals`, `langchain-rag`
+- Per the `langchain-fundamentals` skill: agents MUST be built with `langchain.agents.create_agent()`. Do not use legacy `AgentExecutor` or raw `create_react_agent` patterns.
+- LangGraph state is implicit (managed by `create_agent`); custom `StateGraph` only needed for non-standard control flow.
+- MCP server runs as a subprocess of the Gradio process; it stays alive for the lifetime of the app.
 
 ## Development Log
-All development activities are tracked in `logs/logs.txt`
+All development activities are tracked in `data/logs/logs.txt`.

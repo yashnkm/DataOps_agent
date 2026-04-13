@@ -1,25 +1,25 @@
-# Gradio Framework
-gradio
+# Gradio Framework — pinned to 5.x (v4 conflicts with modern huggingface_hub,
+# v6 has breaking Svelte rendering changes)
+gradio>=5,<6
 
-# AI/LLM Libraries
-# NOTE: google-generativeai is deprecated but still works.
-# Migration to google-genai requires API code changes.
+# Google Gemini SDK (still used by rag_processor and database layer)
 google-generativeai>=0.8.0
-google-api-core>=2.20.0
 
-# LangChain Ecosystem
-langchain
-langchain-google-genai
-langchain-community
-langchain-core
+# LangChain 1.x ecosystem (modern create_agent() API)
+langchain>=1.2,<2
+langchain-core>=1.2,<2
+langchain-community>=0.4,<1
+langchain-google-genai>=4.2,<5
 
-# Embeddings & Reranking
+# LangGraph + MCP (langgraph version is governed by langchain 1.x — leave loose)
+langgraph>=1.0,<2
+langchain-mcp-adapters>=0.2,<1
+
+# Embeddings & Reranking (sentence-transformers pulls torch + transformers)
 sentence-transformers
-transformers
 
 # Vector Store & Search
 faiss-cpu
-langchain-community
 rank-bm25
 scikit-learn
 
@@ -28,11 +28,8 @@ pypdf
 pdfplumber
 python-docx
 openpyxl
-python-pptx
 pandas
 numpy
-unstructured[all-docs]
-pytesseract
 
 # Database
 psycopg2-binary

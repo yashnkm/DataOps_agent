@@ -5,26 +5,29 @@ An intelligent document and database query system using **Gradio**, **FAISS**, *
 ## 🏗️ Architecture
 
 - **Frontend/Backend**: Gradio (unified application)
-- **AI/LLM**: Google Gemini 2.5 Flash
-- **Vector Store**: FAISS with local embeddings
+- **AI/LLM**: Google Gemini (default `gemini-3.1-flash-lite-preview`, configurable via `GEMINI_MODEL`)
+- **Agent**: LangChain 1.x `create_agent()` + LangGraph (cross-source reasoning)
+- **Tools**: Postgres MCP server (`@modelcontextprotocol/server-postgres`) + local RAG tool
+- **Vector Store**: FAISS with local sentence-transformers embeddings
 - **Database**: PostgreSQL with natural language SQL generation
 - **Document Processing**: Multi-format support (PDF, Word, Excel, CSV, Text)
-- **Memory**: Session-based conversation tracking
+- **Memory**: Session-based conversation tracking + LangGraph MemorySaver checkpointer
 
 ## 📁 Project Structure
 
 ```
 ├── src/
-│   ├── apps/                    # Application entry points
-│   │   ├── main_app_full.py    # Complete app with memory & database
-│   │   ├── rag_only_app.py     # RAG-only version
-│   │   ├── simple_app.py       # Basic testing app
-│   │   └── app_minimal.py      # Minimal implementation
+│   ├── apps/                    # Application entry point
+│   │   └── main_app_full.py    # Complete app with memory & database
 │   └── components/             # Core system components
 │       ├── document_processing/ # File upload & text extraction
-│       ├── vector_store/       # FAISS vector operations  
+│       ├── vector_store/       # FAISS vector operations
 │       ├── rag_engine/         # RAG pipeline & hybrid search
 │       ├── database/           # PostgreSQL integration
+│       ├── mcp/                # Postgres MCP client wrapper
+│       ├── agent/              # LangGraph agent (create_agent)
+│       ├── analysis/           # Analysis tab UI
+│       ├── dashboard/          # Financial contract dashboard
 │       └── memory/             # Session management
 ├── database/                   # Database setup & schemas
 │   ├── schemas/                # SQL schema files
@@ -48,43 +51,46 @@ An intelligent document and database query system using **Gradio**, **FAISS**, *
 
 ## 🚀 Quick Start
 
+### 0. Prerequisites
+- **Python 3.9+**
+- **Node.js ≥ 18** (required by `@modelcontextprotocol/server-postgres`, launched via `npx`)
+- **PostgreSQL** (running locally or remote)
+
 ### 1. Setup Project
 ```bash
-# Run automated setup
-python scripts/setup_project.py
-
-# Or manual setup:
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\\Scripts\\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r config/requirements.txt
 ```
 
 ### 2. Configure Environment
-```bash
-# Copy and edit configuration
-cp config/.env.template config/.env
-
-# Required: Add your Google API key
+Add to `.env` (or `config/.env`):
+```env
+# Required: Google AI key
 GOOGLE_API_KEY_SOL_4=your_api_key_here
 
-# Optional: Database settings for PostgreSQL features
+# PostgreSQL — for Dashboard, Smart Chat DB queries, and the MCP server
 DB_HOST=localhost
+DB_PORT=5432
 DB_NAME=financial_services_db
 DB_USER=postgres
 DB_PASSWORD=your_password
+
+# MCP server connection string (URL form of the above)
+POSTGRES_CONNECTION_STRING=postgresql://postgres:your_password@localhost:5432/financial_services_db
+
+# Gemini model for the LangGraph agent (preview model with 500 RPD free tier)
+GEMINI_MODEL=gemini-3.1-flash-lite-preview
+# Fallback if preview tool-calling is flaky:
+# GEMINI_MODEL=gemini-2.5-flash
 ```
 
 ### 3. Run Application
 ```bash
-# Full application (recommended)
-python scripts/run_app.py --app full
+python scripts/run_app.py
 
 # Or run directly:
 cd src/apps && python main_app_full.py
-
-# Other versions:
-python scripts/run_app.py --app simple   # Basic version
-python scripts/run_app.py --app rag      # RAG-only
 ```
 
 ### 4. Setup Test Database (Optional)
@@ -119,10 +125,12 @@ python database/setup/setup_financial_db.py
 - **Context Aware**: Uses conversation history for better responses
 - **Auto Cleanup**: Expired session management
 
-### Hybrid Queries
-- **Document + Database**: Query both sources simultaneously
-- **Cross-Reference**: Combine structured and unstructured data
-- **Intelligent Routing**: Auto-detect query requirements
+### Cross-Source Analysis (🔬 Analysis tab)
+- **LangGraph agent** with `langchain.agents.create_agent()`
+- **Postgres MCP tools** — agent dynamically inspects schema and runs SELECT queries
+- **RAG tool** — agent searches uploaded contracts on demand
+- **Reasoning trace** — collapsible panel shows every tool call and its arguments
+- **Per-session memory** via LangGraph `MemorySaver` checkpointer
 
 ## 💬 Example Use Cases
 
@@ -136,10 +144,11 @@ python database/setup/setup_financial_db.py
 - "What loans have payments due this week?"
 - "Analyze portfolio performance by risk category"
 
-### Hybrid Analysis
-- "Compare database sales figures with projections in uploaded documents"
-- "Cross-reference customer risk assessments with compliance reports"
-- "Validate database portfolio values against external market reports"
+### Cross-Source Analysis (Analysis tab)
+- "What tables are in the database and how are they related?"
+- "Show me the top 5 contracts by value and summarize their fee schedules from the uploaded PDFs"
+- "Are there any transactions that don't match a contract in the database?"
+- "Compare the fee schedule in the uploaded contract against actual transactions"
 
 ## 🧪 Testing
 
@@ -181,11 +190,3 @@ Use the included financial database for comprehensive testing:
 - **tests/**: Test files and test data
 - **docs/**: Documentation and context
 
-## 📋 Available Applications
-
-- **main_app_full.py**: Complete system with memory, database, and RAG
-- **rag_only_app.py**: Document RAG with enhanced UI
-- **simple_app.py**: Basic document Q&A for testing
-- **app_minimal.py**: Minimal implementation
-
-Choose the appropriate application based on your needs and available infrastructure.
