@@ -512,10 +512,11 @@ with gr.Blocks(
         dashboard.create_full_dashboard_interface()
 
     # Analysis Tab (LangGraph agent with MCP Postgres + RAG tools)
-    with gr.Tab("🔬 Analysis"):
-        vs_a, rag_a, _dp_a, sess_a, _db_a = initialize_components()
-        analysis_tab = AnalysisTab(rag_processor=rag_a, session_manager=sess_a)
-        analysis_tab.render()
+    # Temporarily hidden due to DB connectivity issue
+    # with gr.Tab("🔬 Analysis"):
+    #     vs_a, rag_a, _dp_a, sess_a, _db_a = initialize_components()
+    #     analysis_tab = AnalysisTab(rag_processor=rag_a, session_manager=sess_a)
+    #     analysis_tab.render()
 
     # Chat Interface with Memory
     with gr.Tab("💬 Smart Chat"):
