@@ -1,0 +1,59 @@
+# ============================================================
+# FBE APP - SYSTEMD SERVICE SETUP
+# ============================================================
+
+# 1. CREATE SERVICE FILE
+# ----------------------
+sudo nano /etc/systemd/system/fbe-app.service
+
+
+# 2. PASTE THIS INSIDE THE FILE
+# -----------------------------
+[Unit]
+Description=FBE Analytic System
+After=network.target postgresql.service
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/DataOps_agent
+Environment="PATH=/home/ubuntu/DataOps_agent/venv/bin"
+EnvironmentFile=/home/ubuntu/DataOps_agent/.env
+ExecStart=/home/ubuntu/DataOps_agent/venv/bin/python scripts/run_app.py --host 0.0.0.0 --port 7860
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
+# Save: Ctrl+O, Enter, Ctrl+X
+
+
+# 3. KILL ANY PROCESS USING PORT 7860
+# -----------------------------------
+sudo kill -9 $(sudo lsof -t -i :7860) 2>/dev/null
+
+
+# 4. ENABLE & START SERVICE
+# -------------------------
+sudo systemctl daemon-reload
+sudo systemctl enable fbe-app
+sudo systemctl start fbe-app
+
+
+# 5. CHECK STATUS
+# ---------------
+sudo systemctl status fbe-app
+
+
+# 6. WATCH LOGS LIVE
+# ------------------
+sudo journalctl -u fbe-app -f
+
+
+# ============================================================
+# USEFUL COMMANDS
+# ============================================================
+# Restart:  sudo systemctl restart fbe-app
+# Stop:     sudo systemctl stop fbe-app
+# Logs:     sudo journalctl -u fbe-app -n 100
+# Disable:  sudo systemctl disable fbe-app

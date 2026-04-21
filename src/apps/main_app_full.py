@@ -526,7 +526,8 @@ with gr.Blocks(
         chatbot = gr.Chatbot(
             label="Document Chat Assistant",
             height=700,
-            show_label=True
+            show_label=True,
+            type="messages"
         )
 
         with gr.Row():

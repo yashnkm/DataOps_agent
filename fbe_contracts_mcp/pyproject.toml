@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fbe-contracts-mcp"
+version = "0.1.0"
+description = "MCP server exposing the FBE contract analysis capability — Postgres queries, RAG over contract PDFs, and fee-compliance checks."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Capgemini FBE team" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "mcp>=1.27,<2",
+    "psycopg2-binary>=2.9",
+    "python-dotenv>=1.0",
+    # Retrieval stack (reused from the Gradio POC)
+    "sentence-transformers>=3",
+    "faiss-cpu>=1.8",
+    "rank-bm25>=0.2",
+    "langchain-community>=0.4,<1",
+    "langchain-core>=1.2,<2",
+    "google-generativeai>=0.8",
+]
+
+[project.scripts]
+fbe-contracts-mcp = "fbe_contracts_mcp.__main__:main"
+
+[tool.setuptools]
+package-dir = { "" = "." }
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["fbe_contracts_mcp*"]
